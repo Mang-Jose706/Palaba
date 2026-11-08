@@ -1,4 +1,4 @@
-// Public customer tracking page /t/:code (design/reference-html/customer-*.html).
+// Public customer tracking page /t/:code.
 // No login. Shows status steps (no times), the amount due and a Call the shop button.
 
 import { useEffect } from 'react'

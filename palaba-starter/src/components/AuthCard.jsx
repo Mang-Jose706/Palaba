@@ -6,8 +6,8 @@ import Logo from './Logo.jsx'
 import { cx, focusRing } from './cx.js'
 
 /**
- * Centered card with the logo and a big title — the layout of
- * design/figma/login.png, shared by Log in, Sign up and Change password.
+ * Centered card with the logo and a big title (the log in layout),
+ * shared by Log in, Sign up and Change password.
  */
 export default function AuthCard({ title, srTitle, subtitle, children, footer }) {
   return (

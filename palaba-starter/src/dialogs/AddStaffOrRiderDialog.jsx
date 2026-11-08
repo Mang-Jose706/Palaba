@@ -19,7 +19,7 @@ function suggestPassword() {
 }
 
 /**
- * Add a staff member or rider (design/reference-html/add-staff-or-rider.html).
+ * Add a staff member or rider.
  * Pass `account` to edit an existing one instead (role and username stay fixed).
  */
 export default function AddStaffOrRiderDialog({ account, defaultRole = 'staff', onClose, onDone }) {

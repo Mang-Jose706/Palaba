@@ -1,40 +1,10 @@
-# Palaba starter kit for Claude Code
+# Palaba – Laundry Shop Order Tracker
 
-This folder turns the Palaba Figma designs into a React app with Claude Code in the VS Code terminal.
-
-## What’s inside
-
-- `CLAUDE.md` — the project brief: tech stack, design tokens, business rules, folder structure. Claude Code reads it automatically at the start of every session.
-- `design/figma/` — your 13 Figma frames (PNG). The source of truth for the look.
-- `design/reference-html/` — 19 screens not yet in Figma (dialogs, staff mobile, rider, customer tracking, home pickup), as HTML you can open in a browser.
-- `docs/PROMPTS.md` — 10 prompts to paste into Claude Code, one step at a time.
-
-## One-time setup
-
-1. Install **Node.js LTS** from https://nodejs.org and **Git** from https://git-scm.com.
-2. Install **VS Code** from https://code.visualstudio.com.
-3. Install **Claude Code**. In a terminal (on Windows, PowerShell):
-   - Windows PowerShell: `irm https://claude.ai/install.ps1 | iex`
-   - macOS / Linux: `curl -fsSL https://claude.ai/install.sh | bash`
-   - Then open a new terminal and check: `claude --version`
-   - Official guide: https://code.claude.com/docs/en/overview
-4. You need a Claude subscription (Pro or higher) or an Anthropic Console account to log in.
-
-## Start
-
-1. Unzip this kit and open the `palaba-starter` folder in VS Code (**File → Open Folder**).
-2. Open the terminal (**Terminal → New Terminal**) and run:
-   ```
-   git init
-   claude
-   ```
-3. Log in when asked.
-4. Open `docs/PROMPTS.md` and paste **prompt 1**. When it finishes, run `npm run dev` in a second terminal and open the link it prints.
-5. Check the result against the design, then continue with prompt 2, and so on.
-
-Optional: install the **Claude Code** extension in VS Code (Extensions → search “Claude Code”) to see changes as side-by-side diffs.
+A web app for a small laundry shop: it tracks every order from drop-off or home pickup until it is claimed or delivered. Built with React 18, Vite, React Router, Tailwind CSS and lucide-react. The project brief (business rules, design tokens, conventions) is in `CLAUDE.md`.
 
 ## Running the app
+
+Needs **Node.js LTS** (https://nodejs.org).
 
 ```
 npm install
@@ -56,3 +26,15 @@ The app starts empty: no accounts, customers or orders.
 | Customers | no login: `/t/<tracking code>` from the claim slip QR code |
 
 Data is saved in the browser's localStorage (starting data: `src/data/mock.js`). The tests use a separate sample shop in `src/test/sampleData.js`. To start over, clear the site's storage in the browser dev tools. Texts are not really sent: `src/api/sms.js` logs them to the browser console.
+
+## Folders
+
+| Folder | What's in it |
+|---|---|
+| `src/pages/` | Staff and owner pages; `rider/` for riders; `track/` for the customer tracking page |
+| `src/dialogs/` | Pop-up dialogs (record payment, change status, cancel, …) |
+| `src/components/` | Shared UI (buttons, badges, tables, layout, confirm pop-up, …) |
+| `src/utils/` | Business rules: `pricing.js`, `orderRules.js`, plus formatting helpers |
+| `src/api/` | Mock API over localStorage, ready to be replaced by a real back end |
+| `src/data/` | Starting data for a new shop |
+| `src/test/` | Sample shop used by the tests |

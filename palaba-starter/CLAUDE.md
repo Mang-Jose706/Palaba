@@ -10,12 +10,11 @@ Palaba is a web app for a small local laundry shop in the Philippines. It tracks
 - Mock data first (`src/data/mock.js`) behind a small API layer (`src/api/`), so a real back end (Node.js + Express + MySQL, Semaphore SMS) can be plugged in later without changing components
 - No UI kit (no MUI/Bootstrap). Icons: `lucide-react`
 
-## Where the designs are
+## Design
 
-- `design/figma/*.png` — the team's Figma frames. **These are the source of truth for the look.** Match layout, spacing, colors and text as closely as possible.
-- `design/reference-html/*.html` — screens not yet in Figma (dialogs, staff mobile, rider, customer tracking, home pickup). Open them to read exact layout, labels and copy. Rebuild them as React + Tailwind; never paste their HTML/CSS.
-- When a Figma frame and a reference file disagree on looks, follow Figma. When they disagree on a business rule, follow the rules below.
-- Sample names, amounts and counts in the designs are placeholders. Data comes from `mock.js`.
+- The app was built from the team's Figma frames and reference HTML screens (no longer in this folder). **The built app is now the reference for the look**: new screens should reuse the shared components in `src/components/` and the tokens below, and match the existing pages.
+- When looks and a business rule disagree, follow the rules below.
+- The app starts empty (`src/data/mock.js` holds only default Settings). A sample shop for tests lives in `src/test/sampleData.js`.
 
 ## Design tokens
 
@@ -77,6 +76,6 @@ Summary cards: Today’s orders · Unclaimed orders · Kilos washed today (and s
 - Folders: `src/components/` (shared UI: Button, Badge, Card, Tabs, Modal, Input, Sidebar, MobileHeader, OrderRow), `src/pages/`, `src/pages/rider/`, `src/pages/track/`, `src/dialogs/`, `src/utils/`, `src/api/`, `src/data/`.
 - Build shared components first and reuse them; no copy-pasted markup between pages.
 - Business rules live in `src/utils/` (`pricing.js`, `orderRules.js` with `nextAction`, `canCancel`, `canRelease`), never inside JSX.
-- Responsive: desktop layout has the left sidebar; under 768px use the mobile layout from the reference files.
+- Responsive: desktop layout has the left sidebar; under 768px use the existing mobile layouts (top bar + bottom nav, cards instead of tables).
 - Accessible: real `<button>`/`<label>`, visible focus ring, dialogs closable with Esc.
 - After each task: run `npm run build` and fix every error before saying it is done.
