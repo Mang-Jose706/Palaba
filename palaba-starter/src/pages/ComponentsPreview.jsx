@@ -1,6 +1,7 @@
 // TEMPORARY page to check the shared components against the designs.
 // Remove in step 10 (with its route in App.jsx).
 import { useEffect, useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Plus, Search } from 'lucide-react'
 import Logo from '../components/Logo.jsx'
 import Sidebar from '../components/Sidebar.jsx'
@@ -12,6 +13,7 @@ import Input from '../components/Input.jsx'
 import Select from '../components/Select.jsx'
 import Modal from '../components/Modal.jsx'
 import OrderRow, { OrderList } from '../components/OrderRow.jsx'
+import OrderDialogs from '../dialogs/OrderDialogs.jsx'
 import { getSettings, listOrders, listRiders } from '../api/index.js'
 import { STATUSES, PAYMENT_METHODS } from '../utils/orderRules.js'
 import { formatPeso, orderTotal } from '../utils/pricing.js'
@@ -40,12 +42,39 @@ export default function ComponentsPreview() {
   const [segTab, setSegTab] = useState('all')
   const [modalOrder, setModalOrder] = useState(null)
   const [lastAction, setLastAction] = useState('')
+  const [params] = useSearchParams()
+  const [dialog, setDialog] = useState(null)
 
   useEffect(() => {
     listOrders().then(setOrders)
     getSettings().then(setSettings)
     listRiders().then(setRiders)
   }, [])
+
+  // Dialog previews (use ?dialog=record-payment etc. to open one on load).
+  const byId = (id) => orders.find((o) => o.id === id)
+  const DIALOG_SAMPLES = [
+    { label: 'Record payment', name: 'record-payment', id: 'LT-1038' },
+    { label: 'Change status', name: 'change-status', id: 'LT-1051', to: 'in_progress' },
+    { label: 'Cancel order (prepaid)', name: 'cancel-order', id: 'LT-1050' },
+    { label: 'Cancel order (washing started)', name: 'cancel-order-locked', id: 'LT-1047' },
+    { label: 'Mark claimed (paid)', name: 'mark-claimed', id: 'LT-1045' },
+    { label: 'Mark claimed (unpaid)', name: 'mark-claimed-unpaid', id: 'LT-1038' },
+    { label: 'Weigh pickup order', name: 'weigh-pickup-order', id: 'LT-1049' },
+    { label: 'Edit customer', name: 'edit-customer', id: 'LT-1038' },
+  ]
+  function openSample(sample) {
+    const order = byId(sample.id)
+    if (!order) return
+    const name = sample.name.replace(/-(locked|unpaid)$/, '')
+    setDialog({ name, order, to: sample.to, customer: order.customer })
+  }
+  const wanted = params.get('dialog')
+  useEffect(() => {
+    const sample = DIALOG_SAMPLES.find((d) => d.name === wanted)
+    if (sample && orders.length) openSample(sample)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [wanted, orders.length])
 
   const count = (status) => orders.filter((o) => o.status === status).length
   const boardTabs = BOARD_TABS.map((t) => ({
@@ -194,6 +223,16 @@ export default function ComponentsPreview() {
           </div>
         </Section>
 
+        <Section title="Order dialogs (example data, actions really save)">
+          <div className="flex flex-wrap gap-3">
+            {DIALOG_SAMPLES.map((d) => (
+              <Button key={d.name} variant="secondary" onClick={() => openSample(d)}>
+                {d.label}
+              </Button>
+            ))}
+          </div>
+        </Section>
+
         <Section title="Modal">
           <div>
             <Button variant="secondary" onClick={() => setModalOrder(unpaid)} disabled={!unpaid}>
@@ -202,6 +241,8 @@ export default function ComponentsPreview() {
           </div>
         </Section>
       </main>
+
+      <OrderDialogs dialog={dialog} onClose={() => setDialog(null)} onSwitch={setDialog} onDone={(t) => { setDialog(null); setLastAction(t) }} />
 
       <Modal
         open={Boolean(modalOrder)}

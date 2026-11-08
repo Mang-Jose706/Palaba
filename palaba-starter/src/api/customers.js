@@ -59,7 +59,8 @@ export async function createCustomer({ name, mobile, address = '', landmark = ''
   return getCustomer(customer.id)
 }
 
-export async function updateCustomer(id, patch) {
+/** Edit a customer. `by` is the staff user id, saved with the time. */
+export async function updateCustomer(id, patch, { by = null } = {}) {
   mutate((data) => {
     const customer = data.customers.find((c) => c.id === id)
     if (!customer) throw new Error('Customer not found')
@@ -70,9 +71,12 @@ export async function updateCustomer(id, patch) {
         throw new Error('Another customer already uses this mobile number')
       }
     }
-    for (const key of ['name', 'mobile', 'address', 'landmark']) {
+    if ('name' in patch && !patch.name?.trim()) throw new Error('Enter the customer name')
+    for (const key of ['name', 'mobile', 'address', 'landmark', 'notes']) {
       if (key in patch) customer[key] = typeof patch[key] === 'string' ? patch[key].trim() : patch[key]
     }
+    customer.updatedAt = new Date().toISOString()
+    customer.updatedBy = by
   })
   return getCustomer(id)
 }

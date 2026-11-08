@@ -156,6 +156,57 @@ export function nextAction(order) {
   }
 }
 
+/** "Ready for pickup" / "Ready for delivery" — the status label used on Order details. */
+export function statusHeadline(order) {
+  if (order.status === 'ready') return isHomeDelivery(order) ? 'Ready for delivery' : 'Ready for pickup'
+  return statusLabel(order.status)
+}
+
+/**
+ * The status path this order follows (rule 3):
+ *   [pickup_scheduled →] received → in_progress → ready → claimed
+ *   or … ready → out_for_delivery → delivered for home delivery.
+ */
+export function statusPath(order) {
+  const path = order.type === 'home_pickup' ? ['pickup_scheduled', 'received'] : ['received']
+  path.push('in_progress', 'ready')
+  if (isHomeDelivery(order)) path.push('out_for_delivery', 'delivered')
+  else path.push('claimed')
+  return path
+}
+
+/**
+ * Steps for the Order details tracker, matching the REAL status.
+ * Each step: { status, label, state: 'done'|'current'|'upcoming', at }.
+ * A cancelled order shows the steps it reached as done and stops there.
+ */
+export function statusSteps(order) {
+  const path = statusPath(order)
+  const history = order.history ?? []
+  const reachedAt = (status) => [...history].reverse().find((h) => h.status === status)?.at ?? null
+
+  let currentIndex = path.indexOf(order.status)
+  if (order.status === 'cancelled') {
+    // Last step that was reached before cancelling.
+    currentIndex = path.reduce((last, s, i) => (reachedAt(s) ? i : last), 0)
+  }
+  return path.map((status, i) => ({
+    status,
+    label: statusLabel(status),
+    state:
+      order.status === 'cancelled'
+        ? i <= currentIndex
+          ? 'done'
+          : 'upcoming'
+        : i < currentIndex
+          ? 'done'
+          : i === currentIndex
+            ? 'current'
+            : 'upcoming',
+    at: i <= currentIndex ? reachedAt(status) : null,
+  }))
+}
+
 const DAY_MS = 24 * 60 * 60 * 1000
 
 /** Whole days since the order became ready (0 if not ready). */

@@ -8,7 +8,7 @@ import { StatCard } from '../components/Card.jsx'
 import OrderRow, { OrderList } from '../components/OrderRow.jsx'
 import useApiData from '../components/useApiData.js'
 import { useAuth } from '../components/AuthProvider.jsx'
-import QuickActionDialog from '../dialogs/QuickActionDialog.jsx'
+import OrderDialogs, { dialogForAction } from '../dialogs/OrderDialogs.jsx'
 import { getDashboardSummary, getSettings, listOrders, markReady } from '../api/index.js'
 import { formatPeso } from '../utils/pricing.js'
 
@@ -66,7 +66,7 @@ export default function Dashboard() {
   const tabId = TABS.some((t) => t.id === params.get('tab')) ? params.get('tab') : 'to_start'
   const tab = TABS.find((t) => t.id === tabId)
   const [query, setQuery] = useState('')
-  const [dialog, setDialog] = useState(null) // { action, order }
+  const [dialog, setDialog] = useState(null) // { name, order, to }
   const [notice, setNotice] = useState(null) // { tone, text }
 
   const orders = useApiData(() => listOrders({ status: ACTIVE_STATUSES }), [])
@@ -103,7 +103,7 @@ export default function Dashboard() {
       }
       return
     }
-    setDialog({ action, order })
+    setDialog(dialogForAction(action, order))
   }
 
   const s = summary.data
@@ -187,11 +187,11 @@ export default function Dashboard() {
         </div>
       </section>
 
-      <QuickActionDialog
-        action={dialog?.action ?? null}
-        order={dialog?.order ?? null}
+      <OrderDialogs
+        dialog={dialog}
         user={user}
         onClose={() => setDialog(null)}
+        onSwitch={setDialog}
         onDone={(text) => {
           setDialog(null)
           setNotice({ tone: 'success', text })

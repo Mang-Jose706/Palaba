@@ -5,6 +5,7 @@ const VARIANTS = {
   primary: 'bg-brand-gradient text-white hover:brightness-95 shadow-sm',
   secondary: 'bg-tint text-accent hover:bg-[#dce9fd]',
   danger: 'bg-danger-bg text-danger-fg hover:bg-[#f7dcd8]',
+  dangerSolid: 'bg-danger-fg text-white hover:bg-[#962416]',
   ghost: 'bg-transparent text-accent hover:bg-tint',
 }
 
@@ -15,7 +16,7 @@ const SIZES = {
 
 /**
  * Button. Renders a <Link> when `to` is given, otherwise a real <button>.
- * @param {{ variant?: 'primary'|'secondary'|'danger'|'ghost', size?: 'md'|'sm', icon?: React.ComponentType, fullWidth?: boolean, to?: string }} props
+ * @param {{ variant?: 'primary'|'secondary'|'danger'|'dangerSolid'|'ghost', size?: 'md'|'sm', icon?: React.ComponentType, fullWidth?: boolean, to?: string }} props
  */
 export default function Button({
   variant = 'primary',

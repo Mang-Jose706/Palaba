@@ -4,7 +4,7 @@
 // Texts go out only when the customer must act. Each kind can be switched off
 // in Settings; "order_received" and "washing_started" are OFF by default.
 
-import { formatPeso, orderTotal } from '../utils/pricing.js'
+import { formatPeso, orderTotal, roundKg } from '../utils/pricing.js'
 import { getData, mutate } from './store.js'
 
 export const TEXT_KINDS = {
@@ -21,7 +21,7 @@ export function trackingLink(order) {
   return `${origin}/t/${order.trackingCode}`
 }
 
-function messageFor(kind, order, shopName) {
+function messageFor(kind, order, shopName, shopPhone = '') {
   const link = trackingLink(order)
   const due = formatPeso(orderTotal(order))
   switch (kind) {
@@ -36,7 +36,7 @@ function messageFor(kind, order, shopName) {
         ? `${shopName}: Your laundry ${order.id} is on the way. Track: ${link}`
         : `${shopName}: Your laundry ${order.id} is on the way. Please prepare ${due}. Track: ${link}`
     case 'amount_after_weighing':
-      return `${shopName}: Your laundry ${order.id} weighs ${order.kg} kg. Amount due: ${due}. Pay by GCash or Maya. Track: ${link}`
+      return `${shopName}: Your laundry ${order.id} weighs ${roundKg(order.kg)} kg. Amount due: ${due}. Please pay by GCash or Maya to ${shopPhone}. Track: ${link}`
     case 'order_received':
       return `${shopName}: We received your laundry ${order.id}. Track: ${link}`
     case 'washing_started':
@@ -44,6 +44,17 @@ function messageFor(kind, order, shopName) {
     default:
       return ''
   }
+}
+
+/** The exact text a customer would get (for previews in dialogs). */
+export function previewOrderText(kind, order) {
+  const data = getData()
+  return messageFor(kind, order, data.settings.shopName, data.settings.shopPhone)
+}
+
+/** Is this kind of text switched on in Settings? */
+export function isTextEnabled(kind) {
+  return Boolean(getData().settings.texts?.[kind])
 }
 
 /**
@@ -55,7 +66,7 @@ export async function sendOrderText(kind, order) {
   if (!data.settings.texts?.[kind]) return { sent: false }
   const customer = data.customers.find((c) => c.id === order.customerId)
   if (!customer?.mobile) return { sent: false }
-  const message = messageFor(kind, order, data.settings.shopName)
+  const message = messageFor(kind, order, data.settings.shopName, data.settings.shopPhone)
   console.log(`[SMS stub] ${TEXT_KINDS[kind]} → ${customer.mobile}: ${message}`)
   const entry = { kind, to: customer.mobile, at: new Date().toISOString() }
   mutate((d) => {

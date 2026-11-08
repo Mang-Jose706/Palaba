@@ -2,7 +2,7 @@
 // fetch() calls to the Express back end without touching components.
 // All business rules are checked here using src/utils — never trust the UI.
 
-import { orderPrice, orderTotal, ratesFromSettings, roundKg, sessionsFor, SERVICES } from '../utils/pricing.js'
+import { formatPeso, orderPrice, orderTotal, ratesFromSettings, roundKg, sessionsFor, SERVICES } from '../utils/pricing.js'
 import {
   PAYMENT_METHODS,
   PAYMENT_OPTIONS,
@@ -139,7 +139,7 @@ export async function getDashboardSummary(now = new Date()) {
     kilosWashedToday: washedToday.reduce((sum, o) => sum + (roundKg(o.kg) ?? 0), 0),
     sessionsToday: washedToday.reduce((sum, o) => sum + sessionsFor(o.kg), 0),
     collectedToday: orders
-      .filter((o) => o.payment && isSameDay(o.payment.paidAt, now))
+      .filter((o) => o.payment && !o.payment.refundedAt && isSameDay(o.payment.paidAt, now))
       .reduce((sum, o) => sum + o.payment.amount, 0),
   })
 }
@@ -283,13 +283,25 @@ export const markDelivered = (id, opts) => changeStatus(id, 'delivered', opts)
 export const markPickedUp = (id, opts) => changeStatus(id, 'received', opts)
 
 /** Rule 4: cancel only while `received`. */
-export async function cancelOrder(id, reason = '', { by = null } = {}) {
-  const data = getData()
-  if (!canCancel(findOrder(data, id))) {
+/**
+ * Rule 4: cancel only while `received`. If the customer already paid, staff
+ * must confirm they returned the full amount (`refunded: true`).
+ * @param {{ reason: string, note?: string, refunded?: boolean, by?: string }} input
+ */
+export async function cancelOrder(id, { reason, note = '', refunded = false, by = null } = {}) {
+  const order = findOrder(getData(), id)
+  if (!canCancel(order)) {
     throw new Error('Washing has started, so this order can no longer be cancelled.')
   }
+  if (!reason?.trim()) throw new Error('Choose a reason')
+  if (order.payment && !refunded) {
+    throw new Error(`Return the ${formatPeso(order.payment.amount)} to the customer before cancelling.`)
+  }
   mutate((d) => {
-    findOrder(d, id).cancelReason = reason
+    const o = findOrder(d, id)
+    o.cancelReason = reason.trim()
+    o.cancelNote = note.trim()
+    if (o.payment) o.payment = { ...o.payment, refundedAt: new Date().toISOString(), refundedBy: by }
   })
   return changeStatus(id, 'cancelled', { by })
 }
@@ -324,6 +336,7 @@ export async function weighOrder(id, kg, { by = 'staff', bags } = {}) {
     if (!canWeigh(order)) throw new Error("This order's weight can no longer be changed.")
     order.kg = Number(kg)
     order.weighedBy = by
+    order.weighedAt = new Date().toISOString()
     if (bags != null) order.bags = Number(bags)
     return snapshot(order)
   })

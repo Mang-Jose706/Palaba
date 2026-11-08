@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { createOrder, getOrder, markReady, startWashing } from './orders.js'
+import { cancelOrder, createOrder, getOrder, markReady, startWashing, weighOrder } from './orders.js'
 import { resetData } from './store.js'
 
 beforeEach(() => {
@@ -62,6 +62,31 @@ describe('createOrder', () => {
       paymentOption: 'pay_at_pickup',
     })
     expect(o.customerId).toBe('c-01')
+  })
+
+  it('cancel: only while received, and a prepaid order needs the refund confirmed', async () => {
+    const o = await createOrder({
+      type: 'drop_off',
+      customer,
+      service: 'wash_dry',
+      kg: 4,
+      paymentOption: 'pay_now',
+      payment: { method: 'cash' },
+    })
+    await expect(cancelOrder(o.id, { reason: 'Entered by mistake' })).rejects.toThrow(/Return/)
+    const cancelled = await cancelOrder(o.id, { reason: 'Entered by mistake', refunded: true })
+    expect(cancelled.status).toBe('cancelled')
+    expect(cancelled.payment.refundedAt).toBeTruthy()
+    expect(cancelled.texts).toEqual([]) // no cancellation text (rule 5)
+
+    const o2 = await createOrder({ type: 'drop_off', customer, service: 'wash_dry', kg: 4, paymentOption: 'pay_at_pickup' })
+    await startWashing(o2.id)
+    await expect(cancelOrder(o2.id, { reason: 'Other: x' })).rejects.toThrow(/Washing has started/)
+  })
+
+  it("the rider's door weight is final (rule 8)", async () => {
+    // LT-1044 in mock data was weighed by the rider
+    await expect(weighOrder('LT-1044', 5)).rejects.toThrow()
   })
 
   it('Mark ready sends the Ready text with the amount due', async () => {

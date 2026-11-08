@@ -11,6 +11,7 @@ import {
   nextAction,
   paymentLabel,
   paymentOptionsFor,
+  statusSteps,
   unclaimedLabel,
 } from './orderRules.js'
 import { orderTotal } from './pricing.js'
@@ -116,6 +117,37 @@ describe('paymentLabel (rule 6)', () => {
 
   it('paid → "Paid"', () => {
     expect(paymentLabel(make({ status: 'ready', payment: paid }))).toBe('Paid')
+  })
+})
+
+describe('statusSteps (tracker matches the real status)', () => {
+  const states = (o) => statusSteps(o).map((s) => `${s.status}:${s.state}`)
+
+  it('drop-off, ready → Received and In progress done, Ready current, Claimed upcoming', () => {
+    expect(states(make({ status: 'ready' }))).toEqual([
+      'received:done',
+      'in_progress:done',
+      'ready:current',
+      'claimed:upcoming',
+    ])
+  })
+
+  it('home pickup with delivery has the full path', () => {
+    const o = make({ type: 'home_pickup', returnMethod: 'home_delivery', status: 'out_for_delivery' })
+    expect(statusSteps(o).map((s) => s.status)).toEqual([
+      'pickup_scheduled',
+      'received',
+      'in_progress',
+      'ready',
+      'out_for_delivery',
+      'delivered',
+    ])
+    expect(statusSteps(o).find((s) => s.state === 'current').status).toBe('out_for_delivery')
+  })
+
+  it('cancelled order: reached steps done, nothing current', () => {
+    const o = make({ status: 'cancelled', history: [{ status: 'received', at: '2026-11-01T01:00:00Z' }] })
+    expect(states(o)).toEqual(['received:done', 'in_progress:upcoming', 'ready:upcoming', 'claimed:upcoming'])
   })
 })
 
