@@ -129,6 +129,43 @@ function PesoIcon({ className }) {
   )
 }
 
+function PickupWindows({ settings }) {
+  const [windows, setWindows] = useState(settings.pickupWindows ?? [])
+  const [msg, setMsg] = useFlash()
+  const set = (i, v) => setWindows((w) => w.map((x, j) => (j === i ? v : x)))
+  async function save() {
+    try {
+      await updateSettings({ pickupWindows: windows })
+      setMsg({ tone: 'success', text: 'Pickup time windows saved.' })
+    } catch (err) {
+      setMsg({ tone: 'danger', text: err.message })
+    }
+  }
+  return (
+    <SectionCard title="Pickup time windows" subtitle="Choices on New order and Reschedule pickup">
+      <div className="flex flex-col gap-2">
+        {windows.map((w, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <Input aria-label={`Time window ${i + 1}`} value={w} onChange={(e) => set(i, e.target.value)} placeholder="1:00–3:00 PM" className="flex-1" />
+            <TextButton aria-label={`Remove ${w || 'time window'}`} onClick={() => setWindows((x) => x.filter((_, j) => j !== i))} disabled={windows.length <= 1}>
+              Remove
+            </TextButton>
+          </div>
+        ))}
+      </div>
+      <div className="flex gap-3">
+        <Button variant="secondary" icon={Plus} onClick={() => setWindows((w) => [...w, ''])}>
+          Add window
+        </Button>
+        <Button variant="secondary" onClick={save} className="flex-1">
+          Save windows
+        </Button>
+      </div>
+      <Flash msg={msg} />
+    </SectionCard>
+  )
+}
+
 function Unclaimed({ settings }) {
   const [msg, setMsg] = useFlash()
   return (
@@ -141,7 +178,7 @@ function Unclaimed({ settings }) {
           setMsg({ tone: 'success', text: 'Saved.' })
         }}
         options={[1, 2, 3, 4, 5, 7, 10, 14].map((d) => ({ value: String(d), label: `${d} ${d === 1 ? 'day' : 'days'}` }))}
-        hint="Ready orders older than this get an “Unclaimed” badge."
+        hint="Ready orders waiting at the shop longer than this get an “Unclaimed” badge."
       />
       <Flash msg={msg} />
     </SectionCard>
@@ -361,6 +398,7 @@ export default function Settings() {
           <div className="flex flex-col gap-4">
             <ShopDetails settings={s} />
             <Fees settings={s} />
+            <PickupWindows settings={s} />
             <Unclaimed settings={s} />
           </div>
           <div className="flex flex-col gap-6">

@@ -21,12 +21,19 @@ export default function AuthProvider({ children }) {
     return u
   }, [])
 
+  /** Reload the signed-in user (e.g. after changing the password). */
+  const refresh = useCallback(async () => {
+    const u = await getCurrentUser()
+    setUser(u)
+    return u
+  }, [])
+
   const signOut = useCallback(async () => {
     await apiSignOut()
     setUser(null)
   }, [])
 
-  const value = useMemo(() => ({ user, loading, signIn, signOut }), [user, loading, signIn, signOut])
+  const value = useMemo(() => ({ user, loading, signIn, signOut, refresh }), [user, loading, signIn, signOut, refresh])
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
@@ -42,6 +49,8 @@ export function RequireRider({ children }) {
   const location = useLocation()
   if (loading) return null
   if (!user || user.role !== 'rider') return <Navigate to="/rider/login" replace state={{ from: location }} />
+  // First sign-in with a temporary password: set a new one first.
+  if (user.mustChangePassword) return <Navigate to="/rider/change-password" replace />
   return children
 }
 
@@ -53,6 +62,7 @@ export function RequireAuth({ ownerOnly = false, children }) {
   const location = useLocation()
   if (loading) return null
   if (!user || user.role === 'rider') return <Navigate to="/login" replace state={{ from: location }} />
+  if (user.mustChangePassword) return <Navigate to="/change-password" replace />
   if (ownerOnly && user.role !== 'owner') return <Navigate to="/" replace />
   return children
 }

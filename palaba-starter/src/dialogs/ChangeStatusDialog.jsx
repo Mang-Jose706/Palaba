@@ -13,6 +13,7 @@ const COPY = {
   in_progress: { title: (id) => `Start washing ${id}?`, confirm: 'Start washing' },
   ready: { title: (id) => `Mark ${id} ready?`, confirm: 'Mark ready' },
   out_for_delivery: { title: (id) => `Send ${id} out for delivery?`, confirm: 'Send out' },
+  delivered: { title: (id) => `Mark ${id} delivered?`, confirm: 'Mark delivered' },
 }
 
 /** What the customer will (or won't) be texted — decided by the API's rule 5 helper. Never shows costs. */

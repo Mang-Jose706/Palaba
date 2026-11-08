@@ -45,10 +45,15 @@ function persist() {
   }
 }
 
-/** Apply a change to the data, save it, and notify subscribers. */
+/**
+ * Apply a change to the data, save it, and notify subscribers.
+ * All-or-nothing: the change runs on a copy, so if it throws (a rule or
+ * validation error) nothing is saved.
+ */
 export function mutate(fn) {
-  const data = getData()
-  const result = fn(data)
+  const draft = clone(getData())
+  const result = fn(draft)
+  memory = draft
   persist()
   listeners.forEach((l) => l())
   return result

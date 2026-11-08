@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useLocation, useSearchParams } from 'react-router-dom'
 import { Plus, Search } from 'lucide-react'
 import Button from '../components/Button.jsx'
 import Input from '../components/Input.jsx'
@@ -67,7 +67,8 @@ export default function Dashboard() {
   const tab = TABS.find((t) => t.id === tabId)
   const [query, setQuery] = useState('')
   const [dialog, setDialog] = useState(null) // { name, order, to }
-  const [notice, setNotice] = useState(null) // { tone, text }
+  const location = useLocation()
+  const [notice, setNotice] = useState(location.state?.message ? { tone: 'success', text: location.state.message } : null) // { tone, text }
 
   const orders = useApiData(() => listOrders({ status: ACTIVE_STATUSES }), [])
   const summary = useApiData(() => getDashboardSummary(), [])
@@ -80,6 +81,13 @@ export default function Dashboard() {
     .filter((o) => matches(o, query.trim()))
     // oldest first: the order waiting longest is at the top
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt))
+
+  // Search matches in the other tabs, so a search never looks empty by mistake.
+  const elsewhere = query.trim()
+    ? TABS.filter((t) => t.id !== tabId)
+        .map((t) => ({ ...t, count: all.filter((o) => t.statuses.includes(o.status) && matches(o, query.trim())).length }))
+        .filter((t) => t.count > 0)
+    : []
 
   function changeTab(id) {
     setParams(id === 'to_start' ? {} : { tab: id }, { replace: true })
@@ -180,8 +188,18 @@ export default function Dashboard() {
           {orders.loading ? (
             <p className="py-10 text-center text-sm text-muted">Loading orders…</p>
           ) : rows.length === 0 ? (
-            <div className="rounded-card border border-dashed border-line bg-surface px-6 py-12 text-center text-sm text-muted">
+            <div className="flex flex-col items-center rounded-card border border-dashed border-line bg-surface px-6 py-12 text-center text-sm text-muted">
               {query ? `No orders in “${tab.label}” match “${query}”.` : `Nothing in “${tab.label}” right now.`}
+              {query && elsewhere.length > 0 && (
+                <span className="mt-3 flex flex-wrap items-center justify-center gap-2">
+                  Found in:
+                  {elsewhere.map((t) => (
+                    <Button key={t.id} size="sm" variant="secondary" onClick={() => changeTab(t.id)}>
+                      {t.label} ({t.count})
+                    </Button>
+                  ))}
+                </span>
+              )}
             </div>
           ) : (
             <OrderList>

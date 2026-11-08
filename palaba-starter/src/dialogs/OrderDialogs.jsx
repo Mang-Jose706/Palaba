@@ -6,6 +6,8 @@ import CancelOrderDialog from './CancelOrderDialog.jsx'
 import MarkClaimedDialog from './MarkClaimedDialog.jsx'
 import WeighPickupOrderDialog from './WeighPickupOrderDialog.jsx'
 import EditCustomerDialog from './EditCustomerDialog.jsx'
+import EditOrderDialog from './EditOrderDialog.jsx'
+import EditPickupDialog from './EditPickupDialog.jsx'
 
 const NEXT_STATUS = {
   start_washing: 'in_progress',
@@ -48,6 +50,10 @@ function renderDialog(dialog, { user, onClose, onDone, onSwitch }) {
       )
     case 'weigh-pickup-order':
       return <WeighPickupOrderDialog {...common} />
+    case 'edit-order':
+      return <EditOrderDialog {...common} />
+    case 'edit-pickup':
+      return <EditPickupDialog {...common} />
     case 'edit-customer':
       return <EditCustomerDialog {...common} customer={dialog.customer ?? order?.customer} />
     default:

@@ -119,7 +119,9 @@ export default function Pickup() {
       </Section>
 
       {done ? (
-        <Notice tone="success">This pickup is done.</Notice>
+        <Notice tone={o.status === 'cancelled' ? 'danger' : 'success'}>
+          {o.status === 'cancelled' ? 'The shop cancelled this pickup. No need to go.' : 'This pickup is done.'}
+        </Notice>
       ) : (
         <>
           <Section title="How will the customer pay?">

@@ -93,6 +93,24 @@ export async function signIn(username, password, { app = 'staff' } = {}) {
   return respond(publicUser(user))
 }
 
+/**
+ * Set a new password (first sign-in with a temporary password, or any time).
+ * Clears the "must change password" flag.
+ */
+export async function changePassword(id, { current, next }) {
+  if (!next || next.length < 6) throw new Error('Use at least 6 characters.')
+  const user = mutate((data) => {
+    const u = allUsers(data).find((x) => x.id === id)
+    if (!u) throw new Error('User not found')
+    if (u.password !== current) throw new Error('Your current password is wrong.')
+    if (next === current) throw new Error('Choose a password different from the temporary one.')
+    u.password = next
+    u.mustChangePassword = false
+    return u
+  })
+  return respond(publicUser(user))
+}
+
 export async function signOut() {
   try {
     localStorage.removeItem(SESSION_KEY)
@@ -106,7 +124,13 @@ export async function getCurrentUser() {
   try {
     const session = JSON.parse(localStorage.getItem(SESSION_KEY) ?? 'null')
     if (!session) return respond(null)
-    return respond(publicUser(allUsers(getData()).find((u) => u.id === session.id) ?? null))
+    const user = allUsers(getData()).find((u) => u.id === session.id)
+    // A turned-off (or deleted) account is signed out.
+    if (!user || !user.active) {
+      localStorage.removeItem(SESSION_KEY)
+      return respond(null)
+    }
+    return respond(publicUser(user))
   } catch {
     return respond(null)
   }

@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router-dom'
-import { LogOut } from 'lucide-react'
+import { KeyRound, LogOut } from 'lucide-react'
 import RiderShell from '../../components/RiderShell.jsx'
 import Button from '../../components/Button.jsx'
 import Card from '../../components/Card.jsx'
@@ -22,6 +22,9 @@ export default function RiderAccount() {
           </p>
         </div>
       </Card>
+      <Button variant="secondary" icon={KeyRound} fullWidth to="/rider/change-password">
+        Change password
+      </Button>
       <Button
         variant="secondary"
         icon={LogOut}

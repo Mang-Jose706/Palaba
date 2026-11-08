@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom'
 import Button from './Button.jsx'
-import { PaymentBadge, StatusBadge, UnclaimedBadge } from './Badge.jsx'
+import Badge, { PaymentBadge, StatusBadge, UnclaimedBadge } from './Badge.jsx'
 import { cx, focusRing } from './cx.js'
-import { nextAction } from '../utils/orderRules.js'
+import { nextAction, openTripIssue } from '../utils/orderRules.js'
+import { formatShortDate, fromDateKey, toDateKey } from '../utils/format.js'
 import { roundKg, serviceLabel } from '../utils/pricing.js'
 
 /** "Wash, dry & fold · 6 kg" or "… · to weigh". */
@@ -18,7 +19,9 @@ export function serviceSummary(order) {
 export function tripSummary(order) {
   const rider = order.rider?.name?.split(' ')[0]
   if (order.status === 'pickup_scheduled') {
-    return [order.pickup?.window, rider].filter(Boolean).join(' · ')
+    const date = order.pickup?.date
+    const day = date && date !== toDateKey(new Date()) ? formatShortDate(fromDateKey(date)) : null
+    return [day, order.pickup?.window, rider].filter(Boolean).join(' · ')
   }
   if (order.status === 'out_for_delivery') return rider ? `With rider ${rider}` : 'Out for delivery'
   return ''
@@ -59,6 +62,10 @@ export default function OrderRow({ order, settings, onAction, showStatus = false
         {showStatus && <StatusBadge status={order.status} />}
         <PaymentBadge order={order} />
         <UnclaimedBadge order={order} settings={settings} />
+        {openTripIssue(order) && (
+          <Badge tone="danger">{openTripIssue(order).trip === 'pickup' ? 'Pickup' : 'Delivery'} not done</Badge>
+        )}
+        {order.status === 'pickup_scheduled' && order.pickup?.date < toDateKey(new Date()) && <Badge tone="danger">Overdue</Badge>}
       </div>
 
       <div className="flex md:justify-end">

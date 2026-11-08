@@ -56,8 +56,10 @@ export async function getRiderDay(riderId, now = new Date()) {
 
   const nowTrips = mine.filter((o) => o.status === 'out_for_delivery')
   const later = mine
-    .filter((o) => o.status === 'pickup_scheduled' && o.pickup?.date === today)
-    .sort((a, b) => windowStart(a.pickup.window) - windowStart(b.pickup.window))
+    // Today's pickups plus overdue ones (e.g. "try again" after a missed pickup).
+    .filter((o) => o.status === 'pickup_scheduled' && o.pickup?.date && o.pickup.date <= today)
+    .map((o) => ({ ...o, overdue: o.pickup.date < today }))
+    .sort((a, b) => a.pickup.date.localeCompare(b.pickup.date) || windowStart(a.pickup.window) - windowStart(b.pickup.window))
   const done = mine.filter(
     (o) =>
       (o.status === 'delivered' && o.closedAt && toDateKey(o.closedAt) === today) ||

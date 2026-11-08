@@ -4,6 +4,7 @@ import AppLayout from './components/AppLayout.jsx'
 import { RequireAuth, RequireRider } from './components/AuthProvider.jsx'
 
 import Login from './pages/Login.jsx'
+import ChangePassword from './pages/ChangePassword.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import NewOrder from './pages/NewOrder.jsx'
 import OrderCreated from './pages/OrderCreated.jsx'
@@ -28,6 +29,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/change-password" element={<ChangePassword app="staff" />} />
 
       {/* Staff and owner: signed in, inside the sidebar layout */}
       <Route
@@ -51,6 +53,7 @@ export default function App() {
 
       {/* Rider (phone) */}
       <Route path="/rider/login" element={<RiderLogin />} />
+      <Route path="/rider/change-password" element={<ChangePassword app="rider" />} />
       <Route path="/rider" element={<RequireRider><TodaysTrips /></RequireRider>} />
       <Route path="/rider/done" element={<RequireRider><RiderDone /></RequireRider>} />
       <Route path="/rider/account" element={<RequireRider><RiderAccount /></RequireRider>} />

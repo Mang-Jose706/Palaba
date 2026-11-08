@@ -21,6 +21,11 @@ import {
   PAYMENT_METHODS,
   STATUSES,
   canCancel,
+  canChangeRider,
+  canEditOrder,
+  canReschedulePickup,
+  openTripIssue,
+  otherStaffActions,
   canRecordPayment,
   isClosed,
   isHomeDelivery,
@@ -86,6 +91,8 @@ export default function OrderDetails() {
   if (!o) return <main className="px-4 py-8 text-sm text-muted md:px-8">Loading…</main>
 
   const action = nextAction(o)
+  const extraActions = otherStaffActions(o)
+  const tripIssue = openTripIssue(o)
   const price = orderPrice(o)
   const steps = statusSteps(o)
   const stepNo = steps.findIndex((s) => s.state === 'current') + 1
@@ -154,6 +161,11 @@ export default function OrderDetails() {
         {/* Desktop: actions in the header (Figma). Phones: below Payment (staff-mobile-order-details.html). */}
         <div className="flex flex-wrap gap-3 max-md:hidden">
           {actionButtons}
+          {extraActions.map((a) => (
+            <Button key={a.type} variant="secondary" onClick={() => setDialog({ name: 'change-status', order: o, to: a.to })}>
+              {a.label}
+            </Button>
+          ))}
           {action && <Button onClick={runAction}>{action.label}</Button>}
         </div>
       </header>
@@ -167,7 +179,10 @@ export default function OrderDetails() {
       <div className="mt-4 grid grid-cols-1 items-start gap-4 md:mt-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         {/* ── Left column ───────────────────────────────── */}
         <div className="flex flex-col gap-4">
-          <SectionCard title="Items">
+          <SectionCard
+            title="Items"
+            action={canEditOrder(o) && <LinkButton onClick={() => setDialog({ name: 'edit-order', order: o })}>Edit</LinkButton>}
+          >
             <PriceLines price={price} service={o.service} sessionPrice={o.rates?.sessionPrice ?? 0} />
             {kg && (
               <p className="-mt-1 text-xs text-muted">
@@ -205,7 +220,22 @@ export default function OrderDetails() {
           </SectionCard>
 
           {o.type === 'home_pickup' && (
-            <SectionCard title="Pickup and delivery">
+            <SectionCard
+              title="Pickup and delivery"
+              action={
+                (canReschedulePickup(o) || canChangeRider(o)) && (
+                  <LinkButton onClick={() => setDialog({ name: 'edit-pickup', order: o })}>
+                    {canReschedulePickup(o) ? 'Reschedule' : 'Change rider'}
+                  </LinkButton>
+                )
+              }
+            >
+              {tripIssue && (
+                <Notice tone="warning">
+                  {tripIssue.trip === 'pickup' ? 'Pickup' : 'Delivery'} not done: {tripIssue.reason}.{' '}
+                  {tripIssue.nextStep === 'try_later' ? 'Rider will try again later today.' : 'Call the customer, then reschedule.'}
+                </Notice>
+              )}
               <dl className="flex flex-col gap-2.5">
                 <Row label="Address">{o.pickup?.address}</Row>
                 {o.pickup?.landmark && <Row label="Landmark">{o.pickup.landmark}</Row>}
@@ -357,6 +387,11 @@ export default function OrderDetails() {
                 {action.label}
               </Button>
             )}
+            {extraActions.map((a) => (
+              <Button key={a.type} variant="secondary" fullWidth onClick={() => setDialog({ name: 'change-status', order: o, to: a.to })}>
+                {a.label}
+              </Button>
+            ))}
             <div className="grid grid-cols-2 gap-3">{actionButtons}</div>
           </div>
 

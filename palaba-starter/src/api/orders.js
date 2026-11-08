@@ -11,6 +11,9 @@ import {
   canRecordPayment,
   canTransition,
   canWeigh,
+  canChangeRider,
+  canEditOrder,
+  canReschedulePickup,
   isUnclaimed,
   statusSteps,
 } from '../utils/orderRules.js'
@@ -62,13 +65,15 @@ export async function listOrders(filters = {}) {
     .filter((o) => !filters.type || o.type === filters.type)
     .filter((o) => !filters.customerId || o.customerId === filters.customerId)
     .map((o) => withCustomer(data, o))
-    .filter(
-      (o) =>
-        !q ||
+    .filter((o) => {
+      if (!q) return true
+      const digits = q.replace(/\D/g, '')
+      return (
         o.id.toLowerCase().includes(q) ||
         o.customer?.name.toLowerCase().includes(q) ||
-        o.customer?.mobile.includes(q),
-    )
+        (digits.length >= 3 && normalizeMobile(o.customer?.mobile).includes(digits))
+      )
+    })
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
   return respond(list)
 }
@@ -276,7 +281,7 @@ export const markPickedUp = (id, opts) => changeStatus(id, 'received', opts)
 
 /** Rule 4: cancel only while `received`. */
 /**
- * Rule 4: cancel only while `received`. If the customer already paid, staff
+ * Rule 4: cancel only before washing starts (pickup scheduled or received). If the customer already paid, staff
  * must confirm they returned the full amount (`refunded: true`).
  * @param {{ reason: string, note?: string, refunded?: boolean, by?: string }} input
  */
@@ -337,13 +342,58 @@ export async function weighOrder(id, kg, { by = 'staff', bags } = {}) {
   return getOrder(id)
 }
 
-/** Edit notes, bags or rider. Status, price and payment have their own functions. */
+/**
+ * Edit notes, bags, pickup date/window or rider. Status, price and payment have
+ * their own functions. Pickup changes only before the rider picks it up; rider
+ * changes only while a trip is still ahead.
+ */
 export async function updateOrder(id, patch) {
-  const allowed = ['notes', 'bags', 'riderId', 'pickup']
   mutate((data) => {
     const order = findOrder(data, id)
-    for (const key of allowed) {
-      if (key in patch) order[key] = patch[key]
+    if ('pickup' in patch) {
+      if (!canReschedulePickup(order)) throw new Error('This pickup is already done.')
+      const p = { ...order.pickup, ...patch.pickup }
+      if (!p.date || !p.window || !p.address?.trim()) throw new Error('Enter the pickup date, time window and address')
+      order.pickup = p
+    }
+    if ('riderId' in patch) {
+      if (!canChangeRider(order)) throw new Error("This order's rider can't be changed now.")
+      const rider = data.riders.find((r) => r.id === patch.riderId)
+      if (!rider || !rider.active) throw new Error('Choose an active rider')
+      order.riderId = rider.id
+    }
+    if ('bags' in patch) {
+      if (!(Number(patch.bags) >= 1)) throw new Error('Enter the number of bags')
+      order.bags = Number(patch.bags)
+    }
+    if ('notes' in patch) order.notes = String(patch.notes ?? '')
+  })
+  return getOrder(id)
+}
+
+/**
+ * Correct a received, unpaid order: service (re-priced from today's Settings),
+ * bags, and the weight when it can still change (rule 8: not a rider's weight).
+ */
+export async function editOrder(id, { service, kg, bags }) {
+  mutate((data) => {
+    const order = findOrder(data, id)
+    if (!canEditOrder(order)) throw new Error('Only received, unpaid orders can be edited.')
+    if (service && service !== order.service) {
+      if (!SERVICES[service]) throw new Error('Choose a service')
+      order.service = service
+      order.rates = ratesFromSettings(service, data.settings)
+    }
+    if (kg != null && kg !== '' && Number(kg) !== order.kg) {
+      if (!canWeigh(order)) throw new Error("This order's weight can no longer be changed.")
+      if (!roundKg(kg)) throw new Error('Enter the weight')
+      order.kg = Number(kg)
+      order.weighedBy = 'staff'
+      order.weighedAt = new Date().toISOString()
+    }
+    if (bags != null && bags !== '') {
+      if (!(Number(bags) >= 1)) throw new Error('Enter the number of bags')
+      order.bags = Number(bags)
     }
   })
   return getOrder(id)

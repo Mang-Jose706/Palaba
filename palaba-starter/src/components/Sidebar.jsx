@@ -69,7 +69,9 @@ export default function Sidebar({ user, activePath, onSignOut, className }) {
         <div className="mt-auto flex items-center gap-3 px-2">
           <Avatar name={user.name} />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-navy">{user.name}</p>
+            <NavLink to="/change-password" title="Change password" className={cx('block truncate rounded-sm text-sm font-medium text-navy hover:text-accent', focusRing)}>
+              {user.name}
+            </NavLink>
             <p className="text-xs text-muted capitalize">{user.role}</p>
           </div>
           {onSignOut && (

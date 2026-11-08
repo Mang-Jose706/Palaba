@@ -3,7 +3,7 @@ import Badge from '../../components/Badge.jsx'
 import { cx, focusRing } from '../../components/cx.js'
 import { isPaid } from '../../utils/orderRules.js'
 import { formatPeso, orderTotal } from '../../utils/pricing.js'
-import { formatTime } from '../../utils/format.js'
+import { formatShortDate, formatTime, fromDateKey } from '../../utils/format.js'
 
 /** What the rider has to do at this stop, in one line. */
 export function tripTask(order) {
@@ -29,6 +29,10 @@ export default function TripCard({ order, highlight = false, done = false }) {
           </span>
         ) : delivery ? (
           <Badge tone="info">On the way</Badge>
+        ) : order.overdue ? (
+          <Badge tone="danger">
+            From {formatShortDate(fromDateKey(order.pickup.date))} · {order.pickup?.window}
+          </Badge>
         ) : (
           <span className="text-sm text-muted">{order.pickup?.window}</span>
         )}

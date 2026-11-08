@@ -53,9 +53,9 @@ describe('nextAction', () => {
 })
 
 describe('canCancel (rule 4)', () => {
-  it('only while received', () => {
+  it('only before washing starts: pickup scheduled or received', () => {
     for (const status of Object.keys(STATUSES)) {
-      expect(canCancel(make({ status }))).toBe(status === 'received')
+      expect(canCancel(make({ status }))).toBe(status === 'received' || status === 'pickup_scheduled')
     }
   })
 })
@@ -99,6 +99,10 @@ describe('isUnclaimed (rule 7)', () => {
     expect(isUnclaimed(readyDaysAgo(2), {}, now)).toBe(false)
     expect(isUnclaimed(readyDaysAgo(4), {}, now)).toBe(true)
     expect(isUnclaimed(readyDaysAgo(4), { unclaimedAfterDays: 5 }, now)).toBe(false)
+  })
+
+  it('ignores orders waiting for home delivery (only shop pickups are claimed)', () => {
+    expect(isUnclaimed({ ...readyDaysAgo(10), returnMethod: 'home_delivery' }, {}, now)).toBe(false)
   })
 
   it('ignores orders that are not ready', () => {

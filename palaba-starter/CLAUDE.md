@@ -57,10 +57,10 @@ Dialogs (modals): Record payment, Edit customer, Cancel order, Change status, We
 1. **Pricing per washing session.** Two services set by the owner: Wash & dry (sample ₱140) and Wash, dry & fold (sample ₱175) per session. One session holds up to 7 kg. Weight is rounded **up** to the whole kg. Each kg over 7 adds 1/7 of the session price. Example: 10 kg wash, dry & fold = 175 + 3 × 25 = ₱250. Pickup fee and delivery fee are flat amounts from Settings (sample ₱50 each). Put this in ONE function, `src/utils/pricing.js`, and use it everywhere.
 2. **Full payment only.** No partial payments, no balances. Drop-off: “Pay now” or “Pay at pickup”. Home pickup: “At the door”, “After weighing”, or “On delivery”. An order can never be marked Claimed or Delivered while unpaid.
 3. **Statuses:** `pickup_scheduled` → `received` → `in_progress` → `ready` → `claimed`; home delivery: `ready` → `out_for_delivery` → `delivered`; plus `cancelled`. No washing/drying/folding sub-steps.
-4. **Cancel only while `received`.** From `in_progress` on, hide Cancel and show “Washing has started, so this order can no longer be cancelled.”
+4. **Cancel only before washing starts** (`pickup_scheduled` or `received`). From `in_progress` on, hide Cancel and show “Washing has started, so this order can no longer be cancelled.”
 5. **Texts (SMS) only when the customer must act:** Ready for pickup (amount due + tracking link), Pickup scheduled, Out for delivery, and Amount after weighing (only for “After weighing”). “Order received” and “Washing started” texts exist in Settings but are OFF by default. **Never show SMS costs anywhere in the UI.** In the front end, sending a text is a stub in `src/api/sms.js` that logs to the console.
 6. **Payment labels:** unpaid orders show “Unpaid · ₱175 due”; paid orders show “Paid”.
-7. **Unclaimed:** a Ready order older than the owner’s setting (default 3 days) gets an “Unclaimed N days” badge.
+7. **Unclaimed:** a Ready order the customer must claim at the shop, older than the owner’s setting (default 3 days), gets an “Unclaimed N days” badge. Orders waiting for home delivery are not “unclaimed”.
 8. **The rider’s door weight is final.**
 
 ## Dashboard behavior

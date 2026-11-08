@@ -18,6 +18,11 @@ export async function updateSettings(patch) {
     for (const key of ['shopName', 'shopPhone', 'shopAddress', 'pickupFee', 'deliveryFee', 'unclaimedAfterDays', 'pickupWindows']) {
       if (key in patch) s[key] = patch[key]
     }
+    if ('pickupWindows' in patch) {
+      const windows = (patch.pickupWindows ?? []).map((w) => String(w).trim()).filter(Boolean)
+      if (!windows.length) throw new Error('Keep at least one pickup time window')
+      s.pickupWindows = windows
+    }
     for (const key of ['pickupFee', 'deliveryFee', 'unclaimedAfterDays']) {
       s[key] = Number(s[key])
       if (!(s[key] >= 0)) throw new Error('Amounts must be 0 or more')

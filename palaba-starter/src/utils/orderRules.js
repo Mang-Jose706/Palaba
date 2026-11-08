@@ -72,9 +72,12 @@ export function isClosed(order) {
   return TERMINAL.includes(order.status)
 }
 
-/** Rule 4: cancel only while `received`. */
+/**
+ * Rule 4: cancel only before washing starts — while `pickup_scheduled` or
+ * `received`. From `in_progress` on, cancelling is not possible.
+ */
 export function canCancel(order) {
-  return order.status === 'received'
+  return order.status === 'pickup_scheduled' || order.status === 'received'
 }
 
 /** Rule 2: release (mark claimed) only a ready, fully paid, shop-pickup order. */
@@ -100,6 +103,40 @@ export function showCannotCancel(order) {
   return !canCancel(order) && !isClosed(order) && order.status !== 'pickup_scheduled'
 }
 
+/**
+ * Staff actions besides the one next-step button (Order details only):
+ * - "Mark received at shop" when the laundry arrives without the rider app
+ * - "Mark delivered" when the rider can't do it in the app (paid orders only, rule 2)
+ */
+export function otherStaffActions(order) {
+  const actions = []
+  if (order.status === 'pickup_scheduled') actions.push({ type: 'mark_received', label: 'Mark received at shop', to: 'received' })
+  if (canDeliver(order)) actions.push({ type: 'mark_delivered', label: 'Mark delivered', to: 'delivered' })
+  return actions
+}
+
+/** The rider's latest "not done" report, if it still applies to the current trip. */
+export function openTripIssue(order) {
+  if (!['pickup_scheduled', 'out_for_delivery'].includes(order.status)) return null
+  const issue = order.tripIssues?.at(-1)
+  if (!issue) return null
+  const lastMove = order.history?.at(-1)?.at
+  return !lastMove || issue.at >= lastMove ? issue : null
+}
+
+/** A received, unpaid order can still be corrected (service, bags; weight per canWeigh). */
+export function canEditOrder(order) {
+  return order.status === 'received' && !isPaid(order)
+}
+
+/** Pickup date/window can change until the rider picks it up; the rider can change until delivered. */
+export function canReschedulePickup(order) {
+  return order.status === 'pickup_scheduled'
+}
+export function canChangeRider(order) {
+  return order.status === 'pickup_scheduled' || (isHomeDelivery(order) && ['received', 'in_progress', 'ready', 'out_for_delivery'].includes(order.status))
+}
+
 /** Rule 8 at the door: "At the door" must be weighed there; "On delivery" may be. */
 export function riderMustWeigh(paymentOption) {
   return paymentOption === 'at_the_door'
@@ -118,7 +155,7 @@ export function canWeigh(order) {
 export function nextStatuses(order) {
   switch (order.status) {
     case 'pickup_scheduled':
-      return ['received']
+      return ['received', 'cancelled']
     case 'received':
       return isWeighed(order) ? ['in_progress', 'cancelled'] : ['cancelled']
     case 'in_progress':
@@ -239,7 +276,8 @@ export function daysSinceReady(order, now = new Date()) {
  * @param {Date} [now]
  */
 export function isUnclaimed(order, settings = {}, now = new Date()) {
-  if (order.status !== 'ready' || !order.readyAt) return false
+  // Only orders the customer must come and claim (not ones waiting for delivery).
+  if (order.status !== 'ready' || !order.readyAt || isHomeDelivery(order)) return false
   const limit = settings.unclaimedAfterDays ?? 3
   const ms = new Date(now).getTime() - new Date(order.readyAt).getTime()
   return ms > limit * DAY_MS

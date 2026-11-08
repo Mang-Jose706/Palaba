@@ -13,7 +13,7 @@ import SegmentedControl from '../components/SegmentedControl.jsx'
 import PriceLines from '../components/PriceLines.jsx'
 import useApiData from '../components/useApiData.js'
 import { useAuth } from '../components/AuthProvider.jsx'
-import { createOrder, findCustomerByMobile, getSettings, listRiders } from '../api/index.js'
+import { createOrder, findCustomerByMobile, getSettings, listRiders, updateCustomer } from '../api/index.js'
 import { SERVICES, computePrice, formatPeso, roundKg } from '../utils/pricing.js'
 import { PAYMENT_METHODS, paymentOptionsFor } from '../utils/orderRules.js'
 import { formatMobile, fromDateKey, isValidMobile, upcomingDays } from '../utils/format.js'
@@ -123,7 +123,8 @@ export default function NewOrder() {
       if (!alive) return
       setReturning(c)
       if (c) {
-        setName((n) => n || c.name)
+        // Use the saved name; staff can still correct it (saved on submit).
+        setName(c.name)
         setAddress((a) => a || c.address || '')
         setLandmark((l) => l || c.landmark || '')
       }
@@ -175,6 +176,10 @@ export default function NewOrder() {
     }
     setBusy(true)
     try {
+      // Returning customer whose name was corrected here: update the saved name.
+      if (returning && name.trim() !== returning.name) {
+        await updateCustomer(returning.id, { name: name.trim() }, { by: user?.id })
+      }
       const base = {
         type,
         customerId: returning?.id,
@@ -256,6 +261,7 @@ export default function NewOrder() {
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 error={errors.name}
+                hint={returning && name.trim() && name.trim() !== returning.name ? `The saved name “${returning.name}” will be updated.` : undefined}
               />
             </div>
           </SectionCard>

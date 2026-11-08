@@ -14,7 +14,7 @@ import { Caption, ErrorNotice, orderLine, useSubmit } from './shared.jsx'
 const REASONS = ['Customer changed their mind', 'Entered by mistake', 'Duplicate order', 'Other']
 
 /**
- * Rule 4: cancel only while `received`. A prepaid order needs the money
+ * Rule 4: cancel only before washing starts (pickup scheduled or received). A prepaid order needs the money
  * returned first. No cancellation text is sent (rule 5: texts only when the
  * customer must act).
  */
@@ -113,7 +113,7 @@ export default function CancelOrderDialog({ order, user, onClose, onDone }) {
       )}
 
       <ErrorNotice error={error} />
-      <Caption>Only orders that are still Received can be cancelled.</Caption>
+      <Caption>Orders can be cancelled only before washing starts.</Caption>
     </Modal>
   )
 }
