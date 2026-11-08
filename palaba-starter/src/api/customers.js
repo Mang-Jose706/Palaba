@@ -1,0 +1,70 @@
+// Customers API (mock).
+
+import { orderTotal } from '../utils/pricing.js'
+import { isPaid } from '../utils/orderRules.js'
+import { getData, mutate, newId, respond } from './store.js'
+
+function withStats(data, customer) {
+  const orders = data.orders.filter((o) => o.customerId === customer.id && o.status !== 'cancelled')
+  const last = orders.map((o) => o.createdAt).sort().at(-1) ?? null
+  return {
+    ...customer,
+    orderCount: orders.length,
+    totalSpent: orders.filter(isPaid).reduce((sum, o) => sum + o.payment.amount, 0),
+    unpaidDue: orders
+      .filter((o) => !isPaid(o) && !['claimed', 'delivered'].includes(o.status))
+      .reduce((sum, o) => sum + (orderTotal(o) ?? 0), 0),
+    lastOrderAt: last,
+  }
+}
+
+export async function listCustomers({ search } = {}) {
+  const data = getData()
+  const q = search?.trim().toLowerCase()
+  const list = data.customers
+    .filter((c) => !q || c.name.toLowerCase().includes(q) || c.mobile.includes(q))
+    .map((c) => withStats(data, c))
+    .sort((a, b) => a.name.localeCompare(b.name))
+  return respond(list)
+}
+
+export async function getCustomer(id) {
+  const data = getData()
+  const customer = data.customers.find((c) => c.id === id)
+  if (!customer) throw new Error('Customer not found')
+  return respond(withStats(data, customer))
+}
+
+/** Look up a customer by mobile number (New order form autofill). */
+export async function findCustomerByMobile(mobile) {
+  const data = getData()
+  const customer = data.customers.find((c) => c.mobile === mobile.trim())
+  return respond(customer ? withStats(data, customer) : null)
+}
+
+export async function createCustomer({ name, mobile, address = '', landmark = '' }) {
+  if (!name?.trim() || !mobile?.trim()) throw new Error('Enter the name and mobile number')
+  const customer = mutate((data) => {
+    if (data.customers.some((c) => c.mobile === mobile.trim())) {
+      throw new Error('A customer with this mobile number already exists')
+    }
+    const c = { id: newId('c'), name: name.trim(), mobile: mobile.trim(), address, landmark, createdAt: new Date().toISOString() }
+    data.customers.push(c)
+    return c
+  })
+  return getCustomer(customer.id)
+}
+
+export async function updateCustomer(id, patch) {
+  mutate((data) => {
+    const customer = data.customers.find((c) => c.id === id)
+    if (!customer) throw new Error('Customer not found')
+    if (patch.mobile && data.customers.some((c) => c.id !== id && c.mobile === patch.mobile.trim())) {
+      throw new Error('Another customer already uses this mobile number')
+    }
+    for (const key of ['name', 'mobile', 'address', 'landmark']) {
+      if (key in patch) customer[key] = typeof patch[key] === 'string' ? patch[key].trim() : patch[key]
+    }
+  })
+  return getCustomer(id)
+}
