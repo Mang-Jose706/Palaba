@@ -24,9 +24,6 @@ import RiderAccount from './pages/rider/RiderAccount.jsx'
 
 import Tracking from './pages/track/Tracking.jsx'
 
-// TEMPORARY: shared components preview (remove in step 10)
-import ComponentsPreview from './pages/ComponentsPreview.jsx'
-
 export default function App() {
   return (
     <Routes>
@@ -64,9 +61,6 @@ export default function App() {
 
       {/* Customer tracking (no login) */}
       <Route path="/t/:code" element={<Tracking />} />
-
-      {/* TEMPORARY: remove in step 10 */}
-      <Route path="/components" element={<ComponentsPreview />} />
 
       <Route path="*" element={<NotFound />} />
     </Routes>

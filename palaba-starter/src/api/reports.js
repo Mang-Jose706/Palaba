@@ -1,7 +1,7 @@
 // Owner reports (mock). Never includes SMS costs (rule 5).
 
 import { orderTotal } from '../utils/pricing.js'
-import { PAYMENT_METHODS, isClosed, isPaid, isUnclaimed } from '../utils/orderRules.js'
+import { PAYMENT_METHODS, isClosed, isPaid, isUnclaimed, unclaimedLabel } from '../utils/orderRules.js'
 import { toDateKey } from '../utils/format.js'
 import { getData, respond } from './store.js'
 
@@ -52,6 +52,7 @@ export async function getReport(now = new Date()) {
       customerName: customers.find((c) => c.id === o.customerId)?.name ?? '',
       amount: orderTotal(o),
       unclaimed: isUnclaimed(o, settings, now),
+      unclaimedLabel: unclaimedLabel(o, settings, now),
     }))
     .sort((a, b) => a.id.localeCompare(b.id))
 

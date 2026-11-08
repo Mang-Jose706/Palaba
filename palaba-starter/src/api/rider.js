@@ -2,7 +2,7 @@
 // Business rules come from src/utils; the API enforces them.
 
 import { orderPrice, orderTotal, roundKg } from '../utils/pricing.js'
-import { isPaid, paymentOptionsFor } from '../utils/orderRules.js'
+import { isPaid, paymentOptionsFor, riderMayWeigh, riderMustWeigh } from '../utils/orderRules.js'
 import { toDateKey } from '../utils/format.js'
 import { getData, mutate, respond, snapshot } from './store.js'
 import { getOrder, changeStatus } from './orders.js'
@@ -106,8 +106,8 @@ export async function completePickup(id, { riderId, paymentOption, kg, method, b
   if (!paymentOptionsFor('home_pickup', before.returnMethod).some((p) => p.id === paymentOption)) {
     throw new Error('Choose how the customer will pay')
   }
-  const weighs = paymentOption === 'at_the_door' || (paymentOption === 'on_delivery' && roundKg(kg))
-  if (paymentOption === 'at_the_door') {
+  const weighs = riderMustWeigh(paymentOption) || (riderMayWeigh(paymentOption) && roundKg(kg))
+  if (riderMustWeigh(paymentOption)) {
     if (!roundKg(kg)) throw new Error('Enter the weight from the hanging scale')
     if (!RIDER_PAYMENT_METHODS.some((m) => m.id === method)) throw new Error('Choose how the customer paid')
   }

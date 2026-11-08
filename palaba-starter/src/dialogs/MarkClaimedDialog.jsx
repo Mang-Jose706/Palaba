@@ -3,7 +3,7 @@ import Modal from '../components/Modal.jsx'
 import Button from '../components/Button.jsx'
 import Checkbox from '../components/Checkbox.jsx'
 import Notice from '../components/Notice.jsx'
-import Badge from '../components/Badge.jsx'
+import { PaymentBadge } from '../components/Badge.jsx'
 import { serviceSummary } from '../components/OrderRow.jsx'
 import { markClaimed } from '../api/index.js'
 import { PAYMENT_METHODS, canRelease, isPaid } from '../utils/orderRules.js'
@@ -46,7 +46,7 @@ export default function MarkClaimedDialog({ order, user, onClose, onDone, onColl
     >
       <div className="flex items-center justify-between gap-4">
         <p className="text-sm font-semibold">{serviceSummary(order)}</p>
-        <Badge tone={paid ? 'success' : 'warning'}>{paid ? 'Paid in full' : 'Unpaid'}</Badge>
+        <PaymentBadge order={order} />
       </div>
 
       <dl className="flex flex-col gap-2 rounded-control bg-[#F3F5F6] p-4 text-sm">

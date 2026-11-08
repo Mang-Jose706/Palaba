@@ -11,7 +11,7 @@ const VARIANTS = {
 
 const SIZES = {
   md: 'min-h-control px-4 text-sm', // 44px desktop, 48px on phones
-  sm: 'min-h-9 px-3 text-[13px]',
+  sm: 'min-h-control px-3 text-[13px]', // smaller text, same 44px touch size
 }
 
 /**
@@ -32,7 +32,7 @@ export default function Button({
   const classes = cx(
     'inline-flex items-center justify-center gap-2 rounded-control font-semibold whitespace-nowrap transition',
     'disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:brightness-100',
-    size === 'md' && 'max-md:min-h-control-mobile',
+    'max-md:min-h-control-mobile',
     VARIANTS[variant],
     SIZES[size],
     fullWidth && 'w-full',

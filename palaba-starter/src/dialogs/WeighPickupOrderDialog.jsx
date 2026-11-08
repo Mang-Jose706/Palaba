@@ -5,7 +5,7 @@ import Input from '../components/Input.jsx'
 import Notice from '../components/Notice.jsx'
 import Badge from '../components/Badge.jsx'
 import PriceLines from '../components/PriceLines.jsx'
-import { isTextEnabled, previewOrderText, weighOrder } from '../api/index.js'
+import { previewOrderText, textToSend, weighOrder } from '../api/index.js'
 import { canWeigh, paymentOptionLabel } from '../utils/orderRules.js'
 import { orderPrice, roundKg, serviceLabel } from '../utils/pricing.js'
 import { formatTime } from '../utils/format.js'
@@ -21,7 +21,7 @@ export default function WeighPickupOrderDialog({ order, onClose, onDone }) {
   const allowed = canWeigh(order)
   const preview = { ...order, kg: Number(kg) || null }
   const price = orderPrice(preview)
-  const sendsText = order.paymentOption === 'after_weighing' && isTextEnabled('amount_after_weighing')
+  const sendsText = Boolean(textToSend(order, 'weighed_by_staff'))
   const pickedUp = order.history?.find((h) => h.status === 'received')
 
   function submit() {

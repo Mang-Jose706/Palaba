@@ -9,7 +9,7 @@ import OrderRow, { OrderList } from '../components/OrderRow.jsx'
 import useApiData from '../components/useApiData.js'
 import { useAuth } from '../components/AuthProvider.jsx'
 import OrderDialogs, { dialogForAction } from '../dialogs/OrderDialogs.jsx'
-import { getDashboardSummary, getSettings, listOrders, markReady } from '../api/index.js'
+import { getDashboardSummary, getSettings, listOrders, markReady, textToSend } from '../api/index.js'
 import { formatPeso } from '../utils/pricing.js'
 
 // Dashboard tabs (CLAUDE.md "Dashboard behavior").
@@ -90,13 +90,14 @@ export default function Dashboard() {
     if (action.type === 'mark_ready') {
       // No dialog: Mark ready sends the Ready text right away (rule 5).
       try {
+        const sent = textToSend(order, 'ready')
         await markReady(order.id, { by: user?.id })
         setNotice({
           tone: 'success',
           text:
             order.returnMethod === 'home_delivery'
               ? `${order.id} is ready for delivery.`
-              : `${order.id} is ready. ${order.customer?.name ?? 'The customer'} was sent a text.`,
+              : `${order.id} is ready.${sent ? ` ${order.customer?.name ?? 'The customer'} was sent a text.` : ''}`,
         })
       } catch (err) {
         setNotice({ tone: 'danger', text: err.message })

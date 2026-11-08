@@ -69,7 +69,7 @@ export default function CancelOrderDialog({ order, user, onClose, onDone }) {
                 <label
                   key={r}
                   className={cx(
-                    'flex min-h-11 cursor-pointer items-center gap-3 px-3 text-sm',
+                    'flex min-h-control cursor-pointer items-center gap-3 px-3 text-sm max-md:min-h-control-mobile',
                     'has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-accent has-[:focus-visible]:ring-inset',
                     reason === r ? 'bg-tint font-medium' : 'hover:bg-bg',
                   )}

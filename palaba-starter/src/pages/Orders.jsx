@@ -13,6 +13,7 @@ import useApiData from '../components/useApiData.js'
 import { getSettings, listOrders } from '../api/index.js'
 import { formatPeso, orderTotal } from '../utils/pricing.js'
 import { howLabel, timeLabel } from '../utils/orderDisplay.js'
+import { isClosed } from '../utils/orderRules.js'
 
 const TABS = [
   { id: 'all', label: 'All', statuses: null },
@@ -51,7 +52,7 @@ export default function Orders() {
   const since = period.days ? Date.now() - period.days * 24 * 60 * 60 * 1000 : 0
   // Open orders always show, even if they were created before the period.
   const inPeriod = (orders.data ?? []).filter(
-    (o) => new Date(o.createdAt).getTime() >= since || !['claimed', 'delivered', 'cancelled'].includes(o.status),
+    (o) => new Date(o.createdAt).getTime() >= since || !isClosed(o),
   )
   const tab = TABS.find((t) => t.id === tabId)
   const rows = inPeriod.filter((o) => !tab.statuses || tab.statuses.includes(o.status))

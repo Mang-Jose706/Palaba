@@ -85,7 +85,7 @@ export function LoginCard({ app = 'staff' }) {
                 onClick={() => setShowPassword((v) => !v)}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
                 aria-pressed={showPassword}
-                className={cx('grid size-10 place-items-center rounded-control text-navy hover:bg-bg', focusRing)}
+                className={cx('grid size-11 place-items-center rounded-control text-navy hover:bg-bg', focusRing)}
               >
                 {showPassword ? <EyeOff className="size-4.5" aria-hidden="true" /> : <Eye className="size-4.5" aria-hidden="true" />}
               </button>
@@ -108,7 +108,7 @@ export function LoginCard({ app = 'staff' }) {
             type="button"
             onClick={() => setShowHelp((v) => !v)}
             aria-expanded={showHelp}
-            className={cx('inline-flex min-h-10 items-center gap-1.5 rounded-control px-2 text-sm text-muted hover:text-navy', focusRing)}
+            className={cx('inline-flex min-h-control items-center gap-1.5 rounded-control px-2 text-sm text-muted hover:text-navy', focusRing)}
           >
             <Info className="size-4" aria-hidden="true" />
             Forgot password?

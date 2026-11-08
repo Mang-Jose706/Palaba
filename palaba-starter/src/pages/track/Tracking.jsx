@@ -48,7 +48,13 @@ function dayPhrase(dateKey) {
 }
 
 function headline(o) {
-  const textWhen = delivery(o) ? "We'll text you when it's on the way." : "We'll text you when it's ready."
+  const textWhen = delivery(o)
+    ? o.textsOn.onTheWay
+      ? "We'll text you when it's on the way."
+      : 'Check this page for updates.'
+    : o.textsOn.ready
+      ? "We'll text you when it's ready."
+      : 'Check this page for updates.'
   switch (o.status) {
     case 'pickup_scheduled':
       return ['Pickup scheduled', `${o.riderFirstName ? `${o.riderFirstName}, our rider,` : 'Our rider'} will pick up your laundry ${dayPhrase(o.pickupDate)}.`]
@@ -57,7 +63,9 @@ function headline(o) {
     case 'in_progress':
       return ['Washing in progress', textWhen]
     case 'ready':
-      return delivery(o) ? ['Ready for delivery', "We'll text you when the rider is on the way."] : ['Ready for pickup', 'Please bring your claim slip.']
+      return delivery(o)
+        ? ['Ready for delivery', o.textsOn.onTheWay ? "We'll text you when the rider is on the way." : 'Your rider will bring it soon.']
+        : ['Ready for pickup', 'Please bring your claim slip.']
     case 'out_for_delivery':
       return ['Out for delivery', o.riderFirstName ? `Your rider is ${o.riderFirstName}` : 'Your rider is on the way']
     case 'claimed':

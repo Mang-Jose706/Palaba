@@ -95,7 +95,7 @@ export default function Reports() {
                 <tr key={o.id}>
                   <Td className="text-navy">{o.id}</Td>
                   <Td className="text-navy">{o.customerName}</Td>
-                  <Td>{o.unclaimed ? <Badge tone="danger">Unclaimed</Badge> : <StatusBadge status={o.status} />}</Td>
+                  <Td>{o.unclaimed ? <Badge tone="danger">{o.unclaimedLabel}</Badge> : <StatusBadge status={o.status} />}</Td>
                   <Td className="font-semibold text-navy">{formatPeso(o.amount)}</Td>
                   <Td align="right">
                     <Link

@@ -16,7 +16,7 @@ import {
 } from '../utils/orderRules.js'
 import { getData, mutate, newId, respond, snapshot } from './store.js'
 import { isValidMobile, normalizeMobile } from '../utils/format.js'
-import { sendOrderText } from './sms.js'
+import { sendOrderText, textKindFor, textToSend } from './sms.js'
 
 // ── helpers ───────────────────────────────────────────────────────────
 
@@ -47,11 +47,6 @@ function newTrackingCode() {
   return Math.random().toString(36).slice(2, 8).padEnd(6, '0')
 }
 
-const STATUS_TEXT = {
-  received: 'order_received',
-  in_progress: 'washing_started',
-  out_for_delivery: 'out_for_delivery',
-}
 
 // ── reads ─────────────────────────────────────────────────────────────
 
@@ -108,6 +103,8 @@ export async function getOrderByTrackingCode(code) {
     price: orderPrice(order),
     steps: statusSteps(order).map(({ status, state }) => ({ status, state })),
     pickupDate: order.status === 'pickup_scheduled' ? order.pickup?.date ?? null : null,
+    // Rule 5: only promise a text the shop will really send.
+    textsOn: { ready: Boolean(textToSend(order, 'ready')), onTheWay: Boolean(textToSend(order, 'out_for_delivery')) },
     customerFirstName: customer?.name.split(' ')[0] ?? '',
     riderFirstName: rider?.name.split(' ')[0] ?? null,
     shop: { name: data.settings.shopName, phone: data.settings.shopPhone, address: data.settings.shopAddress },
@@ -241,8 +238,8 @@ export async function createOrder(input) {
     return order
   })
 
-  if (created.type === 'home_pickup') await sendOrderText('pickup_scheduled', created)
-  else await sendOrderText('order_received', created) // OFF by default
+  const kind = textKindFor(created, 'created') // drop-off: "Order received", OFF by default
+  if (kind) await sendOrderText(kind, created)
   return getOrder(created.id)
 }
 
@@ -264,11 +261,8 @@ export async function changeStatus(id, to, { by = null } = {}) {
     return snapshot(order)
   })
 
-  if (to === 'ready' && updated.returnMethod !== 'home_delivery') {
-    await sendOrderText('ready_for_pickup', updated)
-  } else if (STATUS_TEXT[to]) {
-    await sendOrderText(STATUS_TEXT[to], updated)
-  }
+  const kind = textKindFor(updated, to)
+  if (kind) await sendOrderText(kind, updated)
   return getOrder(id)
 }
 
@@ -338,9 +332,8 @@ export async function weighOrder(id, kg, { by = 'staff', bags } = {}) {
     if (bags != null) order.bags = Number(bags)
     return snapshot(order)
   })
-  if (updated.paymentOption === 'after_weighing' && by === 'staff') {
-    await sendOrderText('amount_after_weighing', updated)
-  }
+  const kind = by === 'staff' ? textKindFor(updated, 'weighed_by_staff') : null
+  if (kind) await sendOrderText(kind, updated)
   return getOrder(id)
 }
 

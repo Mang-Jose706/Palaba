@@ -12,6 +12,7 @@ import {
   paymentLabel,
   paymentOptionsFor,
   statusSteps,
+  showCannotCancel,
   unclaimedLabel,
 } from './orderRules.js'
 import { orderTotal } from './pricing.js'
@@ -181,5 +182,14 @@ describe('mock data', () => {
       if (['claimed', 'delivered'].includes(o.status)) expect(o.payment, o.id).toBeTruthy()
       if (o.paymentOption === 'pay_now') expect(o.payment, o.id).toBeTruthy()
     }
+  })
+})
+
+describe('showCannotCancel (rule 4)', () => {
+  it('shows the message from in_progress on, while the order is open', () => {
+    expect(showCannotCancel(make({ status: 'received' }))).toBe(false)
+    expect(showCannotCancel(make({ status: 'in_progress' }))).toBe(true)
+    expect(showCannotCancel(make({ status: 'ready' }))).toBe(true)
+    expect(showCannotCancel(make({ status: 'claimed' }))).toBe(false)
   })
 })

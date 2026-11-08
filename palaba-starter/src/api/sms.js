@@ -46,6 +46,39 @@ function messageFor(kind, order, shopName, shopPhone = '') {
   }
 }
 
+/**
+ * Rule 5 in ONE place: which text (if any) an event triggers.
+ * Events: 'created', 'weighed_by_staff', or a new status
+ * ('received', 'in_progress', 'ready', 'out_for_delivery').
+ * Returns the text kind, or null when no text belongs to that event.
+ * Whether it is actually sent also depends on the Settings switch.
+ */
+export function textKindFor(order, event) {
+  switch (event) {
+    case 'created':
+      return order.type === 'home_pickup' ? 'pickup_scheduled' : 'order_received'
+    case 'weighed_by_staff':
+      return order.paymentOption === 'after_weighing' ? 'amount_after_weighing' : null
+    case 'received':
+      return 'order_received'
+    case 'in_progress':
+      return 'washing_started'
+    case 'ready':
+      // Home deliveries get their text when the rider leaves, not at Ready.
+      return order.returnMethod === 'home_delivery' ? null : 'ready_for_pickup'
+    case 'out_for_delivery':
+      return 'out_for_delivery'
+    default:
+      return null
+  }
+}
+
+/** The text kind that WILL go out for this event (switch on), or null. */
+export function textToSend(order, event) {
+  const kind = textKindFor(order, event)
+  return kind && isTextEnabled(kind) ? kind : null
+}
+
 /** The exact text a customer would get (for previews in dialogs). */
 export function previewOrderText(kind, order) {
   const data = getData()

@@ -46,7 +46,7 @@ export default function Tabs({ tabs, value, onChange, variant = 'board', label =
             onClick={() => onChange(tab.id)}
             onKeyDown={(e) => onKeyDown(e, i)}
             className={cx(
-              'relative min-h-10 flex-1 rounded-control px-4 text-sm whitespace-nowrap transition',
+              'relative min-h-control flex-1 rounded-control px-4 max-md:min-h-control-mobile text-sm whitespace-nowrap transition',
               focusRing,
               variant === 'board' && [
                 // Phones (staff-mobile-dashboard.html): white pill, "Start 3" centered.

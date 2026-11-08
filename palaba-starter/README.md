@@ -33,3 +33,23 @@ This folder turns the Palaba Figma designs into a React app with Claude Code in 
 5. Check the result against the design, then continue with prompt 2, and so on.
 
 Optional: install the **Claude Code** extension in VS Code (Extensions → search “Claude Code”) to see changes as side-by-side diffs.
+
+## Running the app
+
+```
+npm install
+npm run dev      # http://localhost:5173
+npm test         # Vitest: pricing, order rules, API
+npm run build    # production build in dist/
+```
+
+Mock accounts (password `palaba123` for all):
+
+| Who | Username | Starts at |
+|---|---|---|
+| Owner | `ana` | `/login` → Dashboard (also Reports, Settings) |
+| Staff | `bea` | `/login` → Dashboard |
+| Rider | `arnel` or `jun` | `/rider/login` → Today's trips |
+| Customer | no login | `/t/<tracking code>`, e.g. `/t/r9d2gh` (from the claim slip QR code) |
+
+Data is mock data (`src/data/mock.js`) saved in the browser's localStorage. To start over, clear the site's storage in the browser dev tools. Texts are not really sent: `src/api/sms.js` logs them to the browser console.

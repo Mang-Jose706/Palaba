@@ -13,7 +13,7 @@ import { cx, focusRing } from '../../components/cx.js'
 import useApiData from '../../components/useApiData.js'
 import { useAuth } from '../../components/AuthProvider.jsx'
 import { RIDER_PAYMENT_METHODS, completePickup, getRiderTrip, logRiderCall } from '../../api/index.js'
-import { paymentOptionLabel, paymentOptionsFor } from '../../utils/orderRules.js'
+import { paymentOptionLabel, paymentOptionsFor, riderMayWeigh, riderMustWeigh } from '../../utils/orderRules.js'
 import { formatPeso, orderPrice, roundKg, serviceLabel } from '../../utils/pricing.js'
 
 function Row({ label, children }) {
@@ -66,8 +66,8 @@ export default function Pickup() {
 
   const paymentOption = option ?? o.paymentOption
   const options = paymentOptionsFor('home_pickup', o.returnMethod)
-  const atDoor = paymentOption === 'at_the_door'
-  const weighHere = atDoor || paymentOption === 'on_delivery'
+  const atDoor = riderMustWeigh(paymentOption)
+  const weighHere = riderMayWeigh(paymentOption)
   const billable = roundKg(kg)
   // Price always from computePrice (via orderPrice) — rule 1.
   const price = orderPrice({ ...o, kg: weighHere ? billable : null })

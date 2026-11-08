@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import TextButton from '../components/TextButton.jsx'
 import { useParams } from 'react-router-dom'
 import { Check, Copy, Printer } from 'lucide-react'
 import BackLink from '../components/BackLink.jsx'
@@ -14,7 +15,7 @@ import { cx, focusRing } from '../components/cx.js'
 import useApiData from '../components/useApiData.js'
 import { useAuth } from '../components/AuthProvider.jsx'
 import OrderDialogs, { dialogForAction } from '../dialogs/OrderDialogs.jsx'
-import { TEXT_KINDS, getOrder, getSettings, markReady, trackingLink, updateOrder } from '../api/index.js'
+import { TEXT_KINDS, getOrder, getSettings, markReady, textToSend, trackingLink, updateOrder } from '../api/index.js'
 import {
   CANNOT_CANCEL_MESSAGE,
   PAYMENT_METHODS,
@@ -26,6 +27,7 @@ import {
   isPaid,
   nextAction,
   paymentOptionLabel,
+  showCannotCancel,
   statusHeadline,
   statusSteps,
 } from '../utils/orderRules.js'
@@ -46,9 +48,9 @@ function SectionCard({ title, action, children, className }) {
 
 function LinkButton({ children, ...rest }) {
   return (
-    <button type="button" className={cx('rounded-sm text-sm font-medium text-accent hover:underline', focusRing)} {...rest}>
+    <TextButton className="-my-2 -mr-3" {...rest}>
       {children}
-    </button>
+    </TextButton>
   )
 }
 
@@ -95,8 +97,12 @@ export default function OrderDetails() {
     setNotice(null)
     if (action.type === 'mark_ready') {
       try {
+        const sent = textToSend(o, 'ready')
         await markReady(o.id, { by: user?.id })
-        setNotice({ tone: 'success', text: isHomeDelivery(o) ? `${o.id} is ready for delivery.` : `${o.id} is ready. ${o.customer?.name} was sent a text.` })
+        setNotice({
+          tone: 'success',
+          text: isHomeDelivery(o) ? `${o.id} is ready for delivery.` : `${o.id} is ready.${sent ? ` ${o.customer?.name} was sent a text.` : ''}`,
+        })
       } catch (err) {
         setNotice({ tone: 'danger', text: err.message })
       }
@@ -191,8 +197,7 @@ export default function OrderDetails() {
                 </Button>
               </div>
             ) : (
-              !isClosed(o) &&
-              o.status !== 'pickup_scheduled' && (
+              showCannotCancel(o) && (
                 // Rule 4: from in_progress on, hide Cancel and explain why.
                 <p className="border-t border-line pt-4 text-[13px] text-muted">{CANNOT_CANCEL_MESSAGE}</p>
               )
@@ -332,7 +337,6 @@ export default function OrderDetails() {
                 </Row>
               )}
             </dl>
-            {paid && !o.payment.refundedAt && <Notice tone="success">Paid in full.</Notice>}
             {!paid && !isClosed(o) && price.total != null && (
               <Notice tone="warning">
                 {isHomeDelivery(o)

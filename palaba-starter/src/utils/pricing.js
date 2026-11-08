@@ -30,12 +30,17 @@ export function sessionsFor(kg) {
   return billableKg == null ? 0 : Math.ceil(billableKg / SESSION_KG)
 }
 
+/** Price of each kg over 7: 1/7 of the session price (₱175 → ₱25). */
+export function extraKgPrice(sessionPrice) {
+  return Number(sessionPrice) / SESSION_KG
+}
+
 /** Laundry cost only (no fees). Returns null when the order is not weighed yet. */
 export function laundryPrice(kg, sessionPrice) {
   const billableKg = roundKg(kg)
   if (billableKg == null) return null
   const extraKg = Math.max(0, billableKg - SESSION_KG)
-  return Math.round(sessionPrice + (extraKg * sessionPrice) / SESSION_KG)
+  return Math.round(sessionPrice + extraKg * extraKgPrice(sessionPrice))
 }
 
 /**
@@ -76,7 +81,7 @@ export function computePrice({
     billableKg,
     sessions: sessionsFor(kg),
     extraKg: billableKg == null ? 0 : Math.max(0, billableKg - SESSION_KG),
-    perExtraKg: sessionPrice / SESSION_KG,
+    perExtraKg: extraKgPrice(sessionPrice),
     laundry,
     pickupFee: f.pickupFee,
     deliveryFee: f.deliveryFee,

@@ -52,7 +52,7 @@ export default function Input({ label, hint, error, icon: Icon, suffix, end, cla
           className={cx(fieldClasses, Icon && 'pl-10', (suffix || end) && 'pr-12')}
           {...rest}
         />
-        {end && <span className="absolute top-1/2 right-1 -translate-y-1/2">{end}</span>}
+        {end && <span className="absolute inset-y-0 right-0 flex items-center">{end}</span>}
         {suffix && (
           <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm text-muted">{suffix}</span>
         )}

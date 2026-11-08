@@ -65,7 +65,7 @@ export default function ClaimSlip({ order, settings, trackingUrl, className }) {
           <dt>Payment</dt>
           <dd className="text-right">
             {paid
-              ? `Paid in full · ${methodLabel ?? ''}`
+              ? `Paid · ${methodLabel ?? ''}`
               : price.total == null
                 ? `Unpaid · ${paymentOptionLabel(order.paymentOption)}`
                 : `${paymentLabel(order)} · ${paymentOptionLabel(order.paymentOption)}`}

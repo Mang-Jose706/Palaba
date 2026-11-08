@@ -3,7 +3,7 @@ import Modal from '../components/Modal.jsx'
 import Button from '../components/Button.jsx'
 import Notice from '../components/Notice.jsx'
 import { StatusBadge } from '../components/Badge.jsx'
-import { changeStatus, isTextEnabled } from '../api/index.js'
+import { changeStatus, textToSend } from '../api/index.js'
 import { canTransition, isHomeDelivery, isPaid, statusLabel } from '../utils/orderRules.js'
 import { formatPeso, orderTotal } from '../utils/pricing.js'
 import { ErrorNotice, orderLine, useSubmit } from './shared.jsx'
@@ -15,27 +15,24 @@ const COPY = {
   out_for_delivery: { title: (id) => `Send ${id} out for delivery?`, confirm: 'Send out' },
 }
 
-/** What the customer will (or won't) be texted — rule 5. Never shows costs. */
+/** What the customer will (or won't) be texted — decided by the API's rule 5 helper. Never shows costs. */
+const TEXT_NOTE = {
+  order_received: 'The customer gets an "Order received" text.',
+  washing_started: 'The customer gets a "Washing started" text.',
+  ready_for_pickup: 'The customer gets a text that it is ready, with the amount due and the tracking link.',
+  out_for_delivery: 'The customer gets a text that it is on the way.',
+}
+
 function textNote(order, to) {
-  switch (to) {
-    case 'received':
-      return isTextEnabled('order_received')
-        ? 'The customer gets an "Order received" text.'
-        : 'No text is sent now.'
-    case 'in_progress':
-      return isTextEnabled('washing_started')
-        ? 'The customer gets a "Washing started" text.'
-        : 'No text is sent now. The customer gets one text when the order is ready.'
-    case 'ready':
-      if (isHomeDelivery(order)) return 'No text is sent now. The customer gets a text when it is out for delivery.'
-      return isTextEnabled('ready_for_pickup')
-        ? 'The customer gets a text that it is ready, with the amount due and the tracking link.'
-        : 'No text is sent (Ready texts are off in Settings).'
-    case 'out_for_delivery':
-      return isTextEnabled('out_for_delivery') ? 'The customer gets a text that it is on the way.' : 'No text is sent.'
-    default:
-      return ''
+  const kind = textToSend(order, to)
+  if (kind) return TEXT_NOTE[kind]
+  // The one text this order will get later (ready, or out for delivery).
+  const delivery = isHomeDelivery(order)
+  const laterStep = delivery ? 'out_for_delivery' : 'ready'
+  if (to !== laterStep && textToSend(order, laterStep)) {
+    return `No text is sent now. The customer gets one text when ${delivery ? 'it is out for delivery' : 'the order is ready'}.`
   }
+  return 'No text is sent.'
 }
 
 /**

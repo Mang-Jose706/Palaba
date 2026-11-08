@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { computePrice, fees, formatPeso, orderTotal, roundKg, sessionsFor } from './pricing.js'
+import { computePrice, extraKgPrice, fees, formatPeso, orderTotal, roundKg, sessionsFor } from './pricing.js'
 
 const FOLD = 175
 const DRY = 140
@@ -85,5 +85,12 @@ describe('helpers', () => {
     expect(formatPeso(250)).toBe('₱250')
     expect(formatPeso(1250)).toBe('₱1,250')
     expect(formatPeso(null)).toBe('—')
+  })
+})
+
+describe('extraKgPrice', () => {
+  it('is 1/7 of the session price', () => {
+    expect(extraKgPrice(175)).toBe(25)
+    expect(extraKgPrice(140)).toBe(20)
   })
 })

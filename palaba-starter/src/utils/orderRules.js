@@ -92,6 +92,22 @@ export function canRecordPayment(order) {
   return !isPaid(order) && !isClosed(order) && isWeighed(order)
 }
 
+/**
+ * Rule 4: show "Washing has started, so this order can no longer be cancelled."
+ * from in_progress on, while the order is still open.
+ */
+export function showCannotCancel(order) {
+  return !canCancel(order) && !isClosed(order) && order.status !== 'pickup_scheduled'
+}
+
+/** Rule 8 at the door: "At the door" must be weighed there; "On delivery" may be. */
+export function riderMustWeigh(paymentOption) {
+  return paymentOption === 'at_the_door'
+}
+export function riderMayWeigh(paymentOption) {
+  return paymentOption === 'at_the_door' || paymentOption === 'on_delivery'
+}
+
 /** Rule 8: the rider's door weight is final — it can never be changed. */
 export function canWeigh(order) {
   if (order.weighedBy === 'rider') return false

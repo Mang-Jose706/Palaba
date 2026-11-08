@@ -229,7 +229,7 @@ export default function NewOrder() {
         value={type}
         onChange={switchType}
         size="lg"
-        className="mt-0 md:mt-5 md:max-w-[420px] [&>button]:min-h-10"
+        className="mt-0 md:mt-5 md:max-w-[420px]"
       />
 
       <form onSubmit={handleSubmit} noValidate className="mt-6 grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">

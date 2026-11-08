@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import TextButton from '../components/TextButton.jsx'
 import { Link } from 'react-router-dom'
 import { Plus, Search } from 'lucide-react'
 import Badge from '../components/Badge.jsx'
@@ -73,14 +74,12 @@ export default function Customers() {
             </div>
             <div className="flex shrink-0 flex-col items-end gap-1">
               {c.unpaidDue > 0 && <Badge tone="warning">{formatPeso(c.unpaidDue)} due</Badge>}
-              <button
-                type="button"
+              <TextButton
                 onClick={() => setEditing(c)}
                 aria-label={`Edit ${c.name}`}
-                className={cx('min-h-11 rounded-control px-3 text-sm font-medium text-accent hover:bg-tint', focusRing)}
               >
                 Edit
-              </button>
+              </TextButton>
             </div>
           </li>
         ))}
@@ -138,14 +137,12 @@ export default function Customers() {
                 )}
               </Td>
               <Td align="right">
-                <button
-                  type="button"
+                <TextButton
                   onClick={() => setEditing(c)}
                   aria-label={`Edit ${c.name}`}
-                  className={cx('min-h-10 rounded-control px-3 text-sm font-medium text-accent hover:bg-tint', focusRing)}
                 >
                   Edit
-                </button>
+                </TextButton>
               </Td>
             </tr>
           ))}

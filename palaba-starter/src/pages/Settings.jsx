@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import TextButton from '../components/TextButton.jsx'
 import { Plus } from 'lucide-react'
 import Badge from '../components/Badge.jsx'
 import Button from '../components/Button.jsx'
@@ -13,7 +14,7 @@ import { cx, focusRing } from '../components/cx.js'
 import useApiData from '../components/useApiData.js'
 import AddStaffOrRiderDialog from '../dialogs/AddStaffOrRiderDialog.jsx'
 import { getSettings, listRiders, listStaff, previewOrderText, updateSettings } from '../api/index.js'
-import { SERVICES, SESSION_KG, computePrice, formatPeso, serviceLabel } from '../utils/pricing.js'
+import { SERVICES, SESSION_KG, computePrice, extraKgPrice, formatPeso, serviceLabel } from '../utils/pricing.js'
 import { formatMobile, isValidMobile } from '../utils/format.js'
 
 // Rule 5: texts only when the customer must act. The two optional ones are OFF
@@ -201,7 +202,7 @@ function Prices({ settings }) {
                     formatPeso(price)
                   )}
                 </Td>
-                <Td className="text-navy">{formatPeso((isEditing ? Number(draft) || 0 : price) / SESSION_KG)}</Td>
+                <Td className="text-navy">{formatPeso(extraKgPrice(isEditing ? Number(draft) || 0 : price))}</Td>
                 <Td align="right">
                   {isEditing ? (
                     <div className="flex justify-end gap-2">
@@ -213,17 +214,15 @@ function Prices({ settings }) {
                       </Button>
                     </div>
                   ) : (
-                    <button
-                      type="button"
+                    <TextButton
                       aria-label={`Edit ${svc.label} price`}
                       onClick={() => {
                         setEditing(svc.id)
                         setDraft(String(price))
                       }}
-                      className={cx('min-h-10 rounded-control px-3 text-sm font-medium text-accent hover:bg-tint', focusRing)}
                     >
                       Edit
-                    </button>
+                    </TextButton>
                   )}
                 </Td>
               </tr>
@@ -321,14 +320,12 @@ function Accounts() {
               <Td className="whitespace-nowrap text-muted">{formatMobile(p.mobile)}</Td>
               <Td>{p.active ? <Badge tone="info">Active</Badge> : <Badge tone="neutral">Inactive</Badge>}</Td>
               <Td align="right">
-                <button
-                  type="button"
+                <TextButton
                   aria-label={`Edit ${p.name}`}
                   onClick={() => setDialog({ account: p })}
-                  className={cx('min-h-10 rounded-control px-3 text-sm font-medium text-accent hover:bg-tint', focusRing)}
                 >
                   Edit
-                </button>
+                </TextButton>
               </Td>
             </tr>
           ))}

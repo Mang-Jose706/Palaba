@@ -38,7 +38,7 @@ export default function SegmentedControl({ options, value, onChange, label, size
             onKeyDown={onKeyDown}
             className={cx(
               'flex-1 rounded-control px-3 text-[13px] leading-4 font-semibold transition',
-              size === 'lg' ? 'min-h-10 md:text-sm' : 'min-h-10',
+              'min-h-control max-md:min-h-control-mobile', size === 'lg' && 'md:text-sm',
               checked ? 'bg-surface text-accent shadow-sm' : 'text-muted hover:text-navy',
               'disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:text-muted',
               focusRing,

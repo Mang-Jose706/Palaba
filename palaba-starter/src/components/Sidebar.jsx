@@ -78,7 +78,7 @@ export default function Sidebar({ user, activePath, onSignOut, className }) {
               onClick={onSignOut}
               aria-label="Log out"
               title="Log out"
-              className={cx('grid size-10 place-items-center rounded-control text-muted hover:bg-bg hover:text-navy', focusRing)}
+              className={cx('grid size-11 place-items-center rounded-control text-muted hover:bg-bg hover:text-navy', focusRing)}
             >
               <LogOut className="size-4.5" aria-hidden="true" />
             </button>

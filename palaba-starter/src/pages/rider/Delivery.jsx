@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import RiderShell from '../../components/RiderShell.jsx'
-import Badge, { StatusBadge } from '../../components/Badge.jsx'
+import { PaymentBadge, StatusBadge } from '../../components/Badge.jsx'
 import Button from '../../components/Button.jsx'
 import Card from '../../components/Card.jsx'
 import ContactCard from '../../components/ContactCard.jsx'
@@ -13,7 +13,7 @@ import { cx, focusRing } from '../../components/cx.js'
 import useApiData from '../../components/useApiData.js'
 import { useAuth } from '../../components/AuthProvider.jsx'
 import { RIDER_PAYMENT_METHODS, completeDelivery, getRiderTrip, logRiderCall, recordDeliveryPayment } from '../../api/index.js'
-import { PAYMENT_METHODS, canDeliver, isPaid, paymentOptionLabel } from '../../utils/orderRules.js'
+import { PAYMENT_METHODS, canDeliver, isPaid } from '../../utils/orderRules.js'
 import { formatPeso, orderPrice } from '../../utils/pricing.js'
 
 export default function Delivery() {
@@ -53,7 +53,7 @@ export default function Delivery() {
     <RiderShell title={`Delivery · ${o.id}`}>
       <div className="flex flex-wrap gap-2">
         <StatusBadge status={o.status} />
-        <Badge tone={paid ? 'success' : 'warning'}>{paid ? 'Paid' : `Pay ${paymentOptionLabel(o.paymentOption).toLowerCase()}`}</Badge>
+        <PaymentBadge order={o} />
       </div>
 
       <ContactCard
@@ -68,7 +68,7 @@ export default function Delivery() {
         <PriceLines price={price} service={o.service} sessionPrice={o.rates?.sessionPrice ?? 0} totalLabel={paid ? 'Total' : 'Collect'} />
         {paid ? (
           <Notice tone="success">
-            Paid in full · {formatPeso(o.payment.amount)} · {paidMethod}. Hand over the laundry.
+            Paid · {formatPeso(o.payment.amount)} · {paidMethod}. Hand over the laundry.
           </Notice>
         ) : (
           <Notice tone="warning">Collect the full {formatPeso(price.total)} before handing over the laundry.</Notice>
