@@ -203,6 +203,33 @@ export default function OrderDetails() {
             </SectionCard>
           )}
 
+          {(o.tripIssues?.length > 0 || o.calls?.length > 0) && (
+            <SectionCard title="Rider reports">
+              {o.tripIssues?.length > 0 && (
+                <ul className="flex flex-col gap-2">
+                  {o.tripIssues.map((t) => (
+                    <li key={t.at}>
+                      <Notice tone="warning">
+                        <span className="font-semibold">
+                          {t.trip === 'pickup' ? 'Pickup' : 'Delivery'} not done · {formatDateTime(t.at)}
+                        </span>
+                        <br />
+                        {t.reason}
+                        {t.note && !t.reason.includes(t.note) && ` · “${t.note}”`} ·{' '}
+                        {t.nextStep === 'try_later' ? 'Rider will try again later today' : 'Shop will call the customer'}
+                      </Notice>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              {o.calls?.length > 0 && (
+                <p className="text-[13px] text-muted">
+                  Rider called the customer {o.calls.length} {o.calls.length === 1 ? 'time' : 'times'} (last {formatDateTime(o.calls.at(-1).at)}).
+                </p>
+              )}
+            </SectionCard>
+          )}
+
           <SectionCard
             title="Notes"
             action={

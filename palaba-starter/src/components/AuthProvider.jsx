@@ -36,6 +36,15 @@ export function useAuth() {
   return ctx
 }
 
+/** Rider pages: only a signed-in rider; everyone else goes to /rider/login. */
+export function RequireRider({ children }) {
+  const { user, loading } = useAuth()
+  const location = useLocation()
+  if (loading) return null
+  if (!user || user.role !== 'rider') return <Navigate to="/rider/login" replace state={{ from: location }} />
+  return children
+}
+
 /**
  * Sends signed-out visitors to /login. With `ownerOnly`, staff are sent to the dashboard.
  */

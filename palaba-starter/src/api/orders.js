@@ -105,23 +105,6 @@ export async function getOrderByTrackingCode(code) {
   })
 }
 
-/** Rider's trips for a day: scheduled pickups that day plus orders out for delivery. */
-export async function listTrips(riderId, date = new Date()) {
-  const data = getData()
-  const day = new Date(date)
-  const ymd = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`
-  const trips = data.orders
-    .filter((o) => o.riderId === riderId)
-    .filter(
-      (o) =>
-        (o.status === 'pickup_scheduled' && o.pickup?.date === ymd) ||
-        o.status === 'out_for_delivery' ||
-        (o.status === 'delivered' && isSameDay(o.closedAt, day)),
-    )
-    .map((o) => ({ ...withCustomer(data, o), tripType: o.status === 'pickup_scheduled' ? 'pickup' : 'delivery' }))
-  return respond(trips)
-}
-
 /** Dashboard tab counts and summary cards. */
 export async function getDashboardSummary(now = new Date()) {
   const { orders, settings } = getData()
@@ -343,18 +326,6 @@ export async function weighOrder(id, kg, { by = 'staff', bags } = {}) {
   if (updated.paymentOption === 'after_weighing' && by === 'staff') {
     await sendOrderText('amount_after_weighing', updated)
   }
-  return getOrder(id)
-}
-
-/** Rider couldn't do the pickup. Keeps it scheduled, optionally on a new date/window. */
-export async function reportPickupNotDone(id, { reason, date, window } = {}) {
-  mutate((data) => {
-    const order = findOrder(data, id)
-    if (order.status !== 'pickup_scheduled') throw new Error('This pickup is already done.')
-    order.pickupIssues = [...(order.pickupIssues ?? []), { reason, at: new Date().toISOString() }]
-    if (date) order.pickup.date = date
-    if (window) order.pickup.window = window
-  })
   return getOrder(id)
 }
 

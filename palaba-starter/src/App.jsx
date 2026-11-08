@@ -1,7 +1,7 @@
 import { Routes, Route } from 'react-router-dom'
 
 import AppLayout from './components/AppLayout.jsx'
-import { RequireAuth } from './components/AuthProvider.jsx'
+import { RequireAuth, RequireRider } from './components/AuthProvider.jsx'
 
 import Login from './pages/Login.jsx'
 import Dashboard from './pages/Dashboard.jsx'
@@ -19,6 +19,8 @@ import TodaysTrips from './pages/rider/TodaysTrips.jsx'
 import Pickup from './pages/rider/Pickup.jsx'
 import Delivery from './pages/rider/Delivery.jsx'
 import PickupNotDone from './pages/rider/PickupNotDone.jsx'
+import RiderDone from './pages/rider/RiderDone.jsx'
+import RiderAccount from './pages/rider/RiderAccount.jsx'
 
 import Tracking from './pages/track/Tracking.jsx'
 
@@ -52,10 +54,13 @@ export default function App() {
 
       {/* Rider (phone) */}
       <Route path="/rider/login" element={<RiderLogin />} />
-      <Route path="/rider" element={<TodaysTrips />} />
-      <Route path="/rider/pickup/:id" element={<Pickup />} />
-      <Route path="/rider/pickup/:id/not-done" element={<PickupNotDone />} />
-      <Route path="/rider/delivery/:id" element={<Delivery />} />
+      <Route path="/rider" element={<RequireRider><TodaysTrips /></RequireRider>} />
+      <Route path="/rider/done" element={<RequireRider><RiderDone /></RequireRider>} />
+      <Route path="/rider/account" element={<RequireRider><RiderAccount /></RequireRider>} />
+      <Route path="/rider/pickup/:id" element={<RequireRider><Pickup /></RequireRider>} />
+      <Route path="/rider/pickup/:id/not-done" element={<RequireRider><PickupNotDone trip="pickup" /></RequireRider>} />
+      <Route path="/rider/delivery/:id" element={<RequireRider><Delivery /></RequireRider>} />
+      <Route path="/rider/delivery/:id/not-done" element={<RequireRider><PickupNotDone trip="delivery" /></RequireRider>} />
 
       {/* Customer tracking (no login) */}
       <Route path="/t/:code" element={<Tracking />} />

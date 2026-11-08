@@ -51,6 +51,17 @@ export function formatTime(date) {
   return new Date(date).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
 }
 
+/** Start of a time window: "1:00–3:00 PM" → "1:00 PM", "11:00–1:00 PM" → "11:00 AM". */
+export function windowStartLabel(window = '') {
+  const [start = '', end = ''] = window.split(/[–-]/).map((s) => s.trim())
+  if (/AM|PM/i.test(start)) return start
+  const endMeridiem = end.match(/AM|PM/i)?.[0]?.toUpperCase() ?? ''
+  const startHour = Number(start.split(':')[0]) % 12
+  const endHour = Number(end.split(':')[0]) % 12
+  const meridiem = endMeridiem === 'PM' && startHour > endHour ? 'AM' : endMeridiem
+  return `${start} ${meridiem}`.trim()
+}
+
 /** The next `count` days starting today (or `from`), as { value: 'YYYY-MM-DD', label } options. */
 export function upcomingDays(count = 7, from = new Date()) {
   return Array.from({ length: count }, (_, i) => {

@@ -8,7 +8,11 @@ import Button from '../components/Button.jsx'
 import { useAuth } from '../components/AuthProvider.jsx'
 import { cx, focusRing } from '../components/cx.js'
 
-export default function Login() {
+/**
+ * Log in card shared by staff/owner (/login) and riders (/rider/login).
+ * @param {{ app?: 'staff'|'rider' }} props
+ */
+export function LoginCard({ app = 'staff' }) {
   const { user, loading, signIn } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
@@ -19,9 +23,11 @@ export default function Login() {
   const [busy, setBusy] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
 
-  const from = location.state?.from?.pathname ?? '/'
+  const home = app === 'rider' ? '/rider' : '/'
+  const from = location.state?.from?.pathname ?? home
+  const signedInHere = user && (app === 'rider' ? user.role === 'rider' : user.role !== 'rider')
 
-  if (!loading && user && user.role !== 'rider') return <Navigate to={from} replace />
+  if (!loading && signedInHere) return <Navigate to={from} replace />
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -32,7 +38,7 @@ export default function Login() {
     setBusy(true)
     setError('')
     try {
-      await signIn(username, password)
+      await signIn(username, password, { app })
       navigate(from, { replace: true })
     } catch (err) {
       setError(err.message)
@@ -42,10 +48,13 @@ export default function Login() {
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-bg px-4 py-10">
+      <h1 className="sr-only">{app === 'rider' ? 'Rider log in' : 'Log in'}</h1>
       <Card className="w-full max-w-[420px] px-6 py-9 sm:px-8">
         <div className="flex flex-col items-center gap-5">
           <Logo />
-          <h1 className="text-[34px] leading-tight font-bold text-navy">Log in</h1>
+          <p aria-hidden="true" className="text-[34px] leading-tight font-bold text-navy">
+            Log in
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} noValidate className="mt-7 flex flex-col gap-4">
@@ -105,10 +114,14 @@ export default function Login() {
             Forgot password?
           </button>
           {showHelp && (
-            <p className="text-center text-[13px] text-muted">Ask the owner to reset your password in Settings.</p>
+            <p className="text-center text-[13px] text-muted">Ask the owner to reset your password.</p>
           )}
         </div>
       </Card>
     </main>
   )
+}
+
+export default function Login() {
+  return <LoginCard app="staff" />
 }

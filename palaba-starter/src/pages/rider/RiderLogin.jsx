@@ -1,5 +1,7 @@
-import PagePlaceholder from '../../components/PagePlaceholder.jsx'
+import { LoginCard } from '../Login.jsx'
 
+// Rider log in (design/reference-html/rider-log-in.html): same card as staff,
+// signs in against rider accounts and lands on Today's trips.
 export default function RiderLogin() {
-  return <PagePlaceholder title="Rider log in" />
+  return <LoginCard app="rider" />
 }
