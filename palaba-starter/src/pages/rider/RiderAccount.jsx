@@ -5,10 +5,12 @@ import Button from '../../components/Button.jsx'
 import Card from '../../components/Card.jsx'
 import { Avatar } from '../../components/Sidebar.jsx'
 import { useAuth } from '../../components/AuthProvider.jsx'
+import { useConfirm } from '../../components/ConfirmProvider.jsx'
 import { formatMobile } from '../../utils/format.js'
 
 export default function RiderAccount() {
   const { user, signOut } = useAuth()
+  const confirm = useConfirm()
   const navigate = useNavigate()
   return (
     <RiderShell>
@@ -30,6 +32,7 @@ export default function RiderAccount() {
         icon={LogOut}
         fullWidth
         onClick={async () => {
+          if (!(await confirm({ title: 'Log out?', message: 'You’ll need your username and password to log in again.', confirmLabel: 'Log out', tone: 'warning' }))) return
           await signOut()
           navigate('/rider/login', { replace: true })
         }}

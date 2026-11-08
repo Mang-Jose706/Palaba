@@ -12,6 +12,7 @@ import SegmentedControl from '../../components/SegmentedControl.jsx'
 import { cx, focusRing } from '../../components/cx.js'
 import useApiData from '../../components/useApiData.js'
 import { useAuth } from '../../components/AuthProvider.jsx'
+import { useConfirm } from '../../components/ConfirmProvider.jsx'
 import { RIDER_PAYMENT_METHODS, completeDelivery, getRiderTrip, logRiderCall, recordDeliveryPayment } from '../../api/index.js'
 import { PAYMENT_METHODS, canDeliver, isPaid } from '../../utils/orderRules.js'
 import { formatPeso, orderPrice } from '../../utils/pricing.js'
@@ -25,6 +26,7 @@ export default function Delivery() {
   const [method, setMethod] = useState('cash')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const confirm = useConfirm()
 
   if (!o) {
     return (
@@ -86,7 +88,20 @@ export default function Delivery() {
           />
           {/* Rule 2: full payment only — the amount can't be changed. */}
           <Input label="Amount received" value={formatPeso(price.total)} readOnly hint="Full amount only. No partial payments." />
-          <Button variant="secondary" fullWidth disabled={busy} onClick={() => run(() => recordDeliveryPayment(o.id, { riderId: user.id, method }))}>
+          <Button
+            variant="secondary"
+            fullWidth
+            disabled={busy}
+            onClick={async () => {
+              const ok = await confirm({
+                title: `Record ${formatPeso(price.total)} from ${o.customer?.name?.split(' ')[0] ?? 'the customer'}?`,
+                message: `Full amount, paid by ${RIDER_PAYMENT_METHODS.find((m) => m.id === method)?.label}. Only record it once you have the money.`,
+                confirmLabel: `Record ${formatPeso(price.total)}`,
+                tone: 'primary',
+              })
+              if (ok) run(() => recordDeliveryPayment(o.id, { riderId: user.id, method }))
+            }}
+          >
             Record {formatPeso(price.total)}
           </Button>
         </Card>
@@ -107,12 +122,19 @@ export default function Delivery() {
             fullWidth
             className="min-h-12 disabled:bg-none disabled:bg-[#E5E9EC] disabled:text-muted disabled:opacity-100"
             disabled={busy || !canDeliver(o)}
-            onClick={() =>
+            onClick={async () => {
+              const ok = await confirm({
+                title: `Mark ${o.id} delivered?`,
+                message: `Only after you have handed the laundry to ${o.customer?.name ?? 'the customer'}.`,
+                confirmLabel: 'Mark delivered',
+                tone: 'primary',
+              })
+              if (!ok) return
               run(async () => {
                 await completeDelivery(o.id, { riderId: user.id })
                 navigate('/rider', { state: { message: `${o.id} delivered.` } })
               })
-            }
+            }}
           >
             Mark delivered
           </Button>

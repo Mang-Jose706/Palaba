@@ -13,7 +13,8 @@ import Table, { Td, Th } from '../components/Table.jsx'
 import { cx, focusRing } from '../components/cx.js'
 import useApiData from '../components/useApiData.js'
 import AddStaffOrRiderDialog from '../dialogs/AddStaffOrRiderDialog.jsx'
-import { approveUser, getSettings, listRiders, listStaff, previewOrderText, updateSettings } from '../api/index.js'
+import { useConfirm } from '../components/ConfirmProvider.jsx'
+import { approveUser, rejectSignUp, getSettings, listRiders, listStaff, previewOrderText, updateSettings } from '../api/index.js'
 import { SERVICES, SESSION_KG, computePrice, extraKgPrice, formatPeso, serviceLabel } from '../utils/pricing.js'
 import { formatMobile, isValidMobile } from '../utils/format.js'
 
@@ -92,6 +93,7 @@ function ShopDetails({ settings }) {
 }
 
 function Fees({ settings }) {
+  const confirm = useConfirm()
   const [form, setForm] = useState({ pickupFee: String(settings.pickupFee), deliveryFee: String(settings.deliveryFee) })
   const [msg, setMsg] = useFlash()
   async function save(e) {
@@ -101,6 +103,13 @@ function Fees({ settings }) {
     if (!(pickupFee >= 0) || !(deliveryFee >= 0) || form.pickupFee === '' || form.deliveryFee === '') {
       return setMsg({ tone: 'danger', text: 'Enter 0 or more for both fees.' })
     }
+    const ok = await confirm({
+      title: 'Change the pickup and delivery fees?',
+      message: `New home pickups will use ${formatPeso(pickupFee)} pickup and ${formatPeso(deliveryFee)} delivery. Existing orders keep their fees.`,
+      confirmLabel: 'Save fees',
+      tone: 'warning',
+    })
+    if (!ok) return
     await updateSettings({ pickupFee, deliveryFee })
     setMsg({ tone: 'success', text: 'Fees saved. They apply to new orders.' })
   }
@@ -130,6 +139,20 @@ function PesoIcon({ className }) {
 }
 
 function PickupWindows({ settings }) {
+  const confirm = useConfirm()
+  async function remove(i) {
+    const w = windows[i]
+    if (w.trim()) {
+      const ok = await confirm({
+        title: `Remove “${w}”?`,
+        message: 'It won’t be offered for new pickups after you save. Pickups already booked keep their time.',
+        confirmLabel: 'Remove',
+        tone: 'danger',
+      })
+      if (!ok) return
+    }
+    setWindows((x) => x.filter((_, j) => j !== i))
+  }
   const [windows, setWindows] = useState(settings.pickupWindows ?? [])
   const [msg, setMsg] = useFlash()
   const set = (i, v) => setWindows((w) => w.map((x, j) => (j === i ? v : x)))
@@ -147,7 +170,7 @@ function PickupWindows({ settings }) {
         {windows.map((w, i) => (
           <div key={i} className="flex items-center gap-2">
             <Input aria-label={`Time window ${i + 1}`} value={w} onChange={(e) => set(i, e.target.value)} placeholder="1:00–3:00 PM" className="flex-1" />
-            <TextButton aria-label={`Remove ${w || 'time window'}`} onClick={() => setWindows((x) => x.filter((_, j) => j !== i))} disabled={windows.length <= 1}>
+            <TextButton aria-label={`Remove ${w || 'time window'}`} onClick={() => remove(i)} disabled={windows.length <= 1}>
               Remove
             </TextButton>
           </div>
@@ -186,6 +209,7 @@ function Unclaimed({ settings }) {
 }
 
 function Prices({ settings }) {
+  const confirm = useConfirm()
   const [editing, setEditing] = useState(null) // service id
   const [draft, setDraft] = useState('')
   const [msg, setMsg] = useFlash()
@@ -195,6 +219,13 @@ function Prices({ settings }) {
   async function save(id) {
     const value = Number(draft)
     if (!(value > 0)) return setMsg({ tone: 'danger', text: 'Enter a price more than 0.' })
+    const ok = await confirm({
+      title: `Change the ${serviceLabel(id)} price?`,
+      message: `${formatPeso(settings.prices[id])} → ${formatPeso(value)} per session (${formatPeso(extraKgPrice(value))} per extra kg). New orders use the new price; existing orders keep theirs.`,
+      confirmLabel: 'Save price',
+      tone: 'warning',
+    })
+    if (!ok) return
     await updateSettings({ prices: { [id]: value } })
     setEditing(null)
     setMsg({ tone: 'success', text: `${serviceLabel(id)} price saved. It applies to new orders.` })
@@ -292,7 +323,29 @@ function Texts({ settings }) {
     rates: { sessionPrice: settings.prices.wash_dry_fold, pickupFee: 0, deliveryFee: 0 },
     payment: null,
   }
-  const toggle = (key) => (value) => updateSettings({ texts: { [key]: value } })
+  const confirm = useConfirm()
+  const toggle = (key) => async (value) => {
+    const needed = TEXTS_NEEDED.find((t) => t.key === key)
+    const label = (needed ?? TEXTS_OPTIONAL.find((t) => t.key === key)).label
+    const ok = await confirm(
+      value
+        ? {
+            title: `Turn on “${label}” texts?`,
+            message: needed ? 'Customers will get this text again.' : 'This text is optional: customers don’t need to act on it.',
+            confirmLabel: 'Turn on',
+            tone: 'primary',
+          }
+        : {
+            title: `Turn off “${label}” texts?`,
+            message: needed
+              ? 'Customers need this text to know what to do. Without it, staff must call them.'
+              : 'Customers will stop getting this text.',
+            confirmLabel: 'Turn off',
+            tone: needed ? 'danger' : 'warning',
+          },
+    )
+    if (ok) await updateSettings({ texts: { [key]: value } })
+  }
   const on = Object.values(settings.texts).filter(Boolean).length
 
   return (
@@ -321,6 +374,7 @@ function Texts({ settings }) {
 }
 
 function Accounts() {
+  const confirm = useConfirm()
   const staff = useApiData(() => listStaff(), [])
   const riders = useApiData(() => listRiders(), [])
   const [dialog, setDialog] = useState(null) // { account? }
@@ -370,11 +424,37 @@ function Accounts() {
                   <TextButton
                     aria-label={`Approve ${p.name}`}
                     onClick={async () => {
+                      const ok = await confirm({
+                        title: `Approve ${p.name}?`,
+                        message: `${p.name} (@${p.username}) will be able to log in as ${p.role === 'rider' ? 'a rider' : 'staff'}.`,
+                        confirmLabel: 'Approve',
+                        tone: 'primary',
+                      })
+                      if (!ok) return
                       await approveUser(p.id)
                       setMsg({ tone: 'success', text: `${p.name} can now log in.` })
                     }}
                   >
                     Approve
+                  </TextButton>
+                )}
+                {p.pending && (
+                  <TextButton
+                    aria-label={`Reject ${p.name}`}
+                    className="text-danger-fg hover:bg-danger-bg"
+                    onClick={async () => {
+                      const ok = await confirm({
+                        title: `Reject ${p.name}’s sign-up?`,
+                        message: `The request from @${p.username} will be deleted. They can sign up again later.`,
+                        confirmLabel: 'Reject and delete',
+                        tone: 'danger',
+                      })
+                      if (!ok) return
+                      await rejectSignUp(p.id)
+                      setMsg({ tone: 'neutral', text: `${p.name}’s sign-up was rejected.` })
+                    }}
+                  >
+                    Reject
                   </TextButton>
                 )}
                 <TextButton

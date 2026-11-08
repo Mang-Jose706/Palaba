@@ -13,6 +13,7 @@ import SegmentedControl from '../components/SegmentedControl.jsx'
 import PriceLines from '../components/PriceLines.jsx'
 import useApiData from '../components/useApiData.js'
 import { useAuth } from '../components/AuthProvider.jsx'
+import { useConfirm } from '../components/ConfirmProvider.jsx'
 import { createOrder, findCustomerByMobile, getSettings, listRiders, updateCustomer } from '../api/index.js'
 import { SERVICES, computePrice, formatPeso, roundKg } from '../utils/pricing.js'
 import { PAYMENT_METHODS, paymentOptionsFor } from '../utils/orderRules.js'
@@ -95,6 +96,7 @@ export default function NewOrder() {
   const [errors, setErrors] = useState({})
   const [formError, setFormError] = useState('')
   const [busy, setBusy] = useState(false)
+  const confirm = useConfirm()
 
   const s = settings.data
   const windows = s?.pickupWindows ?? []
@@ -174,6 +176,46 @@ export default function NewOrder() {
       setFormError('Please fix the highlighted fields.')
       return
     }
+    // Check the summary before saving (money may be collected now).
+    const methodLabel = PAYMENT_METHODS.find((m) => m.id === method)?.label
+    const riderName = riders.data?.find((x) => x.id === riderId)?.name
+    const dayLabel = days.find((d) => d.value === pickupDay)?.label
+    const ok = await confirm({
+      title: isPickup ? `Schedule a pickup for ${name.trim()}?` : `Create the order for ${name.trim()}?`,
+      message: (
+        <dl className="flex flex-col gap-1.5">
+          <div className="flex justify-between gap-4">
+            <dt className="text-muted">Service</dt>
+            <dd className="text-right">
+              {SERVICES[service].label}
+              {!isPickup && ` · ${billableKg} kg`}
+            </dd>
+          </div>
+          {isPickup ? (
+            <>
+              <div className="flex justify-between gap-4">
+                <dt className="text-muted">Pickup</dt>
+                <dd className="text-right">
+                  {dayLabel}, {pickupWindow}
+                </dd>
+              </div>
+              <div className="flex justify-between gap-4">
+                <dt className="text-muted">Rider</dt>
+                <dd className="text-right">{riderName}</dd>
+              </div>
+            </>
+          ) : null}
+          <div className="flex justify-between gap-4 font-semibold">
+            <dt>{!isPickup && paymentOption === 'pay_now' ? `Collect now · ${methodLabel}` : 'Total'}</dt>
+            <dd>{price.total == null ? 'After weighing' : formatPeso(price.total)}</dd>
+          </div>
+          {isPickup && s?.texts?.pickup_scheduled && <p className="mt-1 text-muted">The customer gets a text now confirming the pickup.</p>}
+        </dl>
+      ),
+      confirmLabel: isPickup ? 'Schedule pickup' : paymentOption === 'pay_now' ? `Collect ${formatPeso(price.total)} and create` : 'Create order',
+      tone: 'primary',
+    })
+    if (!ok) return
     setBusy(true)
     try {
       // Returning customer whose name was corrected here: update the saved name.

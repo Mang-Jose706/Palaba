@@ -7,6 +7,7 @@ import SegmentedControl from '../components/SegmentedControl.jsx'
 import { addUser, updateUser } from '../api/index.js'
 import { formatMobile, isValidMobile } from '../utils/format.js'
 import { ErrorNotice, useSubmit } from './shared.jsx'
+import { useConfirm } from '../components/ConfirmProvider.jsx'
 
 const ROLE_HELP = {
   staff: 'Staff can take orders, record payments, and edit customers.',
@@ -33,6 +34,7 @@ export default function AddStaffOrRiderDialog({ account, defaultRole = 'staff', 
   })
   const [errors, setErrors] = useState({})
   const { busy, error, run } = useSubmit()
+  const confirm = useConfirm()
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
   const isOwner = account?.role === 'owner'
   const roleWord = role === 'rider' ? 'rider' : 'staff'
@@ -47,6 +49,15 @@ export default function AddStaffOrRiderDialog({ account, defaultRole = 'staff', 
     setErrors(errs)
     if (Object.keys(errs).length) return
     run(async () => {
+      if (editing && account.active && !form.active) {
+        const ok = await confirm({
+          title: `Turn off ${account.name}’s account?`,
+          message: `${account.name} will be logged out and can’t log in until the account is turned on again.${account.role === 'rider' ? ' Reassign their trips first.' : ''}`,
+          confirmLabel: 'Turn off account',
+          tone: 'danger',
+        })
+        if (!ok) throw new Error('Not saved. The account is still on.')
+      }
       if (editing) {
         await updateUser(account.id, { name: form.name, mobile: form.mobile, active: form.active, password: form.password || undefined })
         onDone(`Saved changes to ${form.name.trim()}.`)

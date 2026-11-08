@@ -1,6 +1,6 @@
 // Workflow fixes from the full review: stuck orders, edits, accounts.
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { cancelOrder, changeStatus, editOrder, getOrder, listOrders, updateOrder } from './orders.js'
+import { cancelOrder, changeStatus, editOrder, getOrder, listOrders, undoLastStatus, undoPayment, updateOrder } from './orders.js'
 import { addUser, changePassword, getCurrentUser, signIn, updateUser } from './staff.js'
 import { getRiderDay, reportTripProblem } from './rider.js'
 import { getSettings, updateSettings } from './settings.js'
@@ -99,5 +99,42 @@ describe('search', () => {
     expect(list.every((o) => o.customerId === 'c-01')).toBe(true)
     expect(list.length).toBeGreaterThan(0)
     expect(getData()).toBeTruthy()
+  })
+})
+
+describe('undo a status change made by mistake', () => {
+  it('steps back one status and clears what the step set; no text is sent', async () => {
+    const started = await changeStatus('LT-1051', 'in_progress', { by: 'u-02' })
+    expect(started.startedAt).toBeTruthy()
+    const back = await undoLastStatus('LT-1051', { by: 'u-02' })
+    expect(back.status).toBe('received')
+    expect(back.startedAt).toBeNull()
+    expect(back.texts).toEqual([])
+    // cancelling is possible again (rule 4)
+    expect((await cancelOrder('LT-1051', { reason: 'Entered by mistake' })).status).toBe('cancelled')
+  })
+
+  it('an accidental release (claimed) can go back to ready', async () => {
+    const o = await changeStatus('LT-1045', 'claimed', { by: 'u-02' })
+    expect(o.status).toBe('claimed')
+    const back = await undoLastStatus('LT-1045', { by: 'u-02' })
+    expect(back.status).toBe('ready')
+    expect(back.closedAt).toBeNull()
+  })
+
+  it('cannot undo twice in a row, a cancellation, or a rider pickup', async () => {
+    await changeStatus('LT-1051', 'in_progress', { by: 'u-02' })
+    await undoLastStatus('LT-1051')
+    await expect(undoLastStatus('LT-1051')).rejects.toThrow()
+    await expect(undoLastStatus('LT-1048')).rejects.toThrow() // cancelled
+  })
+
+  it('removes a payment recorded by mistake, but not after release', async () => {
+    const paid = await getOrder('LT-1045')
+    expect(paid.payment).toBeTruthy()
+    const o = await undoPayment('LT-1045', { by: 'u-02' })
+    expect(o.payment).toBeNull()
+    expect(o.removedPayments).toHaveLength(1)
+    await expect(undoPayment('LT-1042')).rejects.toThrow() // claimed
   })
 })

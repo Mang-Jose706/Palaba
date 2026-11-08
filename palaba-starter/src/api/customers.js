@@ -60,6 +60,19 @@ export async function createCustomer({ name, mobile, address = '', landmark = ''
 }
 
 /** Edit a customer. `by` is the staff user id, saved with the time. */
+/** Delete a customer — only one with no orders (orders keep their history). */
+export async function deleteCustomer(id) {
+  mutate((data) => {
+    if (data.orders.some((o) => o.customerId === id)) {
+      throw new Error('This customer has orders, so they can’t be deleted.')
+    }
+    const before = data.customers.length
+    data.customers = data.customers.filter((c) => c.id !== id)
+    if (data.customers.length === before) throw new Error('Customer not found')
+  })
+  return respond(true)
+}
+
 export async function updateCustomer(id, patch, { by = null } = {}) {
   mutate((data) => {
     const customer = data.customers.find((c) => c.id === id)

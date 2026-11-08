@@ -79,3 +79,20 @@ describe('fresh start (no sample data)', () => {
     expect(second.pending).toBe(true)
   })
 })
+
+describe('deleting', () => {
+  it('rejecting a sign-up deletes only waiting accounts', async () => {
+    const { rejectSignUp } = await import('./staff.js')
+    const { user } = await signUp(form)
+    await rejectSignUp(user.id)
+    await expect(signIn('mia', 'secret1')).rejects.toThrow(/Wrong/)
+    await expect(rejectSignUp('u-02')).rejects.toThrow(/Turn this account off/)
+  })
+
+  it('a customer can be deleted only when they have no orders', async () => {
+    const { createCustomer, deleteCustomer } = await import('./customers.js')
+    await expect(deleteCustomer('c-01')).rejects.toThrow(/has orders/)
+    const c = await createCustomer({ name: 'No Orders', mobile: '09179998888' })
+    await expect(deleteCustomer(c.id)).resolves.toBe(true)
+  })
+})

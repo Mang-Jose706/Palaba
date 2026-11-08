@@ -12,6 +12,7 @@ import SegmentedControl from '../../components/SegmentedControl.jsx'
 import { cx, focusRing } from '../../components/cx.js'
 import useApiData from '../../components/useApiData.js'
 import { useAuth } from '../../components/AuthProvider.jsx'
+import { useConfirm } from '../../components/ConfirmProvider.jsx'
 import { RIDER_PAYMENT_METHODS, completePickup, getRiderTrip, logRiderCall } from '../../api/index.js'
 import { paymentOptionLabel, paymentOptionsFor, riderMayWeigh, riderMustWeigh } from '../../utils/orderRules.js'
 import { formatPeso, orderPrice, roundKg, serviceLabel } from '../../utils/pricing.js'
@@ -48,6 +49,7 @@ export default function Pickup() {
   const [note, setNote] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const confirm = useConfirm()
 
   if (trip.error) {
     return (
@@ -76,6 +78,28 @@ export default function Pickup() {
   async function submit() {
     setError('')
     if (atDoor && !billable) return setError('Enter the weight from the hanging scale.')
+    const methodLabel = RIDER_PAYMENT_METHODS.find((m) => m.id === method)?.label
+    const ok = await confirm({
+      title: atDoor ? `Collect ${formatPeso(price.total)} and mark picked up?` : `Mark ${o.id} picked up?`,
+      message: (
+        <>
+          {weighHere && billable && (
+            <p>
+              Weight: <strong>{billable} kg</strong>. The weight taken here is final and can’t be changed later.
+            </p>
+          )}
+          {atDoor && (
+            <p className="mt-2">
+              Payment: <strong>{formatPeso(price.total)} · {methodLabel}</strong>, full amount.
+            </p>
+          )}
+          {!weighHere && <p>Staff will weigh it at the shop.</p>}
+        </>
+      ),
+      confirmLabel: atDoor ? `Collect ${formatPeso(price.total)}` : 'Mark picked up',
+      tone: 'primary',
+    })
+    if (!ok) return
     setBusy(true)
     try {
       await completePickup(o.id, {

@@ -3,6 +3,10 @@ import { createPortal } from 'react-dom'
 import { X } from 'lucide-react'
 import { cx, focusRing } from './cx.js'
 
+// Open dialogs, newest last: only the top one reacts to Esc / Tab
+// (a confirm pop-up can open on top of another dialog).
+const stack = []
+
 const FOCUSABLE = 'a[href], button:not([disabled]), input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
 
 /**
@@ -19,6 +23,8 @@ export default function Modal({ open, onClose, title, children, footer, size = '
 
   useEffect(() => {
     if (!open) return
+    const token = {}
+    stack.push(token)
     const previous = document.activeElement
     const panel = panelRef.current
     const first = panel?.querySelector('[data-autofocus]') ?? panel?.querySelectorAll(FOCUSABLE)[1] ?? panel
@@ -27,6 +33,7 @@ export default function Modal({ open, onClose, title, children, footer, size = '
     document.body.style.overflow = 'hidden'
 
     function onKeyDown(e) {
+      if (stack.at(-1) !== token) return
       if (e.key === 'Escape') {
         e.stopPropagation()
         onCloseRef.current?.()
@@ -47,6 +54,7 @@ export default function Modal({ open, onClose, title, children, footer, size = '
     document.addEventListener('keydown', onKeyDown)
     return () => {
       document.removeEventListener('keydown', onKeyDown)
+      stack.splice(stack.indexOf(token), 1)
       document.body.style.overflow = overflow
       previous?.focus?.()
     }

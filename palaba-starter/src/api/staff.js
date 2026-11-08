@@ -150,6 +150,18 @@ export async function getSetupState() {
   return respond({ hasOwner: data.staff.some((u) => u.role === 'owner' && u.active) })
 }
 
+/** Owner rejects a sign-up request: the waiting account is deleted. */
+export async function rejectSignUp(id) {
+  mutate((data) => {
+    const u = allUsers(data).find((x) => x.id === id)
+    if (!u) throw new Error('User not found')
+    if (!u.pending) throw new Error('Only accounts waiting for approval can be rejected. Turn this account off instead.')
+    data.staff = data.staff.filter((x) => x.id !== id)
+    data.riders = data.riders.filter((x) => x.id !== id)
+  })
+  return respond(true)
+}
+
 /** Owner approves a signed-up account so it can sign in. */
 export async function approveUser(id) {
   return updateUser(id, { active: true })

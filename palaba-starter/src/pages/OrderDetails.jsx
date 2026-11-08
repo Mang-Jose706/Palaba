@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import TextButton from '../components/TextButton.jsx'
 import { useParams } from 'react-router-dom'
-import { Check, Copy, Printer } from 'lucide-react'
+import { Check, Copy, Printer, Undo2 } from 'lucide-react'
 import BackLink from '../components/BackLink.jsx'
 import { MobileTopBar } from '../components/MobileHeader.jsx'
 import Badge, { UnclaimedBadge } from '../components/Badge.jsx'
@@ -15,12 +15,17 @@ import { cx, focusRing } from '../components/cx.js'
 import useApiData from '../components/useApiData.js'
 import { useAuth } from '../components/AuthProvider.jsx'
 import OrderDialogs, { dialogForAction } from '../dialogs/OrderDialogs.jsx'
+import ActionNotice, { useMarkReady, useUndo } from '../components/ActionNotice.jsx'
+import { useConfirm } from '../components/ConfirmProvider.jsx'
 import { TEXT_KINDS, getOrder, getSettings, markReady, textToSend, trackingLink, updateOrder } from '../api/index.js'
 import {
   CANNOT_CANCEL_MESSAGE,
   PAYMENT_METHODS,
   STATUSES,
   canCancel,
+  canUndoPayment,
+  statusLabel,
+  undoInfo,
   canChangeRider,
   canEditOrder,
   canReschedulePickup,
@@ -78,6 +83,9 @@ export default function OrderDetails() {
   const [copied, setCopied] = useState(false)
   const [editingNote, setEditingNote] = useState(false)
   const [noteDraft, setNoteDraft] = useState('')
+  const confirm = useConfirm()
+  const markOrderReady = useMarkReady()
+  const { undoStatus, removePayment } = useUndo()
 
   if (order.error) {
     return (
@@ -91,6 +99,7 @@ export default function OrderDetails() {
   if (!o) return <main className="px-4 py-8 text-sm text-muted md:px-8">Loading…</main>
 
   const action = nextAction(o)
+  const undo = undoInfo(o)
   const extraActions = otherStaffActions(o)
   const tripIssue = openTripIssue(o)
   const price = orderPrice(o)
@@ -104,12 +113,8 @@ export default function OrderDetails() {
     setNotice(null)
     if (action.type === 'mark_ready') {
       try {
-        const sent = textToSend(o, 'ready')
-        await markReady(o.id, { by: user?.id })
-        setNotice({
-          tone: 'success',
-          text: isHomeDelivery(o) ? `${o.id} is ready for delivery.` : `${o.id} is ready.${sent ? ` ${o.customer?.name} was sent a text.` : ''}`,
-        })
+        const result = await markOrderReady(o)
+        if (result) setNotice(result)
       } catch (err) {
         setNotice({ tone: 'danger', text: err.message })
       }
@@ -129,8 +134,26 @@ export default function OrderDetails() {
   }
 
   async function saveNote() {
+    if (o.notes && !noteDraft.trim()) {
+      const ok = await confirm({
+        title: 'Delete this note?',
+        message: `“${o.notes}” will be removed from ${o.id}.`,
+        confirmLabel: 'Delete note',
+        tone: 'danger',
+      })
+      if (!ok) return
+    }
     await updateOrder(o.id, { notes: noteDraft.trim() })
     setEditingNote(false)
+  }
+
+  async function runUndo(kind) {
+    try {
+      const text = kind === 'payment' ? await removePayment(o) : await undoStatus(o)
+      if (text) setNotice({ tone: 'neutral', text })
+    } catch (err) {
+      setNotice({ tone: 'danger', text: err.message })
+    }
   }
 
   const statusTone = STATUSES[o.status]?.tone ?? 'neutral'
@@ -170,11 +193,7 @@ export default function OrderDetails() {
         </div>
       </header>
 
-      {notice && (
-        <Notice tone={notice.tone} role="status" className="mt-4">
-          {notice.text}
-        </Notice>
-      )}
+      <ActionNotice notice={notice} onChange={setNotice} className="mt-4" />
 
       <div className="mt-4 grid grid-cols-1 items-start gap-4 md:mt-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         {/* ── Left column ───────────────────────────────── */}
@@ -216,6 +235,15 @@ export default function OrderDetails() {
                 // Rule 4: from in_progress on, hide Cancel and explain why.
                 <p className="border-t border-line pt-4 text-[13px] text-muted">{CANNOT_CANCEL_MESSAGE}</p>
               )
+            )}
+            {undo && (
+              <div className="flex flex-wrap items-center justify-between gap-2 rounded-control bg-[#F3F5F6] px-3 py-1">
+                <span className="text-[13px] text-muted">Changed to {statusLabel(undo.from)} by mistake?</span>
+                <TextButton onClick={() => runUndo('status')}>
+                  <Undo2 className="mr-1 size-4" aria-hidden="true" />
+                  Undo: back to {statusLabel(undo.to)}
+                </TextButton>
+              </div>
             )}
           </SectionCard>
 
@@ -379,6 +407,11 @@ export default function OrderDetails() {
                 Record payment
               </Button>
             )}
+            {canUndoPayment(o) && (
+              <TextButton onClick={() => runUndo('payment')} className="self-start text-danger-fg hover:bg-danger-bg">
+                Remove payment (recorded by mistake)
+              </TextButton>
+            )}
           </SectionCard>
 
           <div className="flex flex-col gap-3 md:hidden">
@@ -409,8 +442,10 @@ export default function OrderDetails() {
         onClose={() => setDialog(null)}
         onSwitch={setDialog}
         onDone={(text) => {
+          const done = dialog
           setDialog(null)
-          setNotice({ tone: 'success', text })
+          const undo = done?.name === 'record-payment' ? 'payment' : ['change-status', 'mark-claimed'].includes(done?.name) ? 'status' : null
+          setNotice({ tone: 'success', text, orderId: o.id, undo })
         }}
       />
     </main>

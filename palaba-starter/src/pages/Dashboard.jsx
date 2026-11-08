@@ -10,7 +10,8 @@ import useApiData from '../components/useApiData.js'
 import { useAuth } from '../components/AuthProvider.jsx'
 import OrderDialogs, { dialogForAction } from '../dialogs/OrderDialogs.jsx'
 import SetupChecklist from '../components/SetupChecklist.jsx'
-import { getDashboardSummary, getSettings, listOrders, markReady, textToSend } from '../api/index.js'
+import ActionNotice, { useMarkReady } from '../components/ActionNotice.jsx'
+import { getDashboardSummary, getSettings, listOrders } from '../api/index.js'
 import { formatPeso } from '../utils/pricing.js'
 
 // Dashboard tabs (CLAUDE.md "Dashboard behavior").
@@ -68,6 +69,7 @@ export default function Dashboard() {
   const tab = TABS.find((t) => t.id === tabId)
   const [query, setQuery] = useState('')
   const [dialog, setDialog] = useState(null) // { name, order, to }
+  const markOrderReady = useMarkReady()
   const location = useLocation()
   const [notice, setNotice] = useState(location.state?.message ? { tone: 'success', text: location.state.message } : null) // { tone, text }
 
@@ -97,17 +99,10 @@ export default function Dashboard() {
   async function handleAction(action, order) {
     setNotice(null)
     if (action.type === 'mark_ready') {
-      // No dialog: Mark ready sends the Ready text right away (rule 5).
+      // No dialog in the design, but it texts the customer: confirm first.
       try {
-        const sent = textToSend(order, 'ready')
-        await markReady(order.id, { by: user?.id })
-        setNotice({
-          tone: 'success',
-          text:
-            order.returnMethod === 'home_delivery'
-              ? `${order.id} is ready for delivery.`
-              : `${order.id} is ready.${sent ? ` ${order.customer?.name ?? 'The customer'} was sent a text.` : ''}`,
-        })
+        const result = await markOrderReady(order)
+        if (result) setNotice(result)
       } catch (err) {
         setNotice({ tone: 'danger', text: err.message })
       }
@@ -174,18 +169,7 @@ export default function Dashboard() {
         />
         <p className="text-[13px] text-muted md:hidden">{tab.hint}</p>
 
-        {notice && (
-          <p
-            role="status"
-            className={
-              notice.tone === 'success'
-                ? 'rounded-control bg-success-bg px-4 py-3 text-sm text-success-fg'
-                : 'rounded-control bg-danger-bg px-4 py-3 text-sm text-danger-fg'
-            }
-          >
-            {notice.text}
-          </p>
-        )}
+        <ActionNotice notice={notice} onChange={setNotice} />
 
         <div role="tabpanel" aria-label={tab.label}>
           {orders.loading ? (
@@ -226,8 +210,11 @@ export default function Dashboard() {
         onClose={() => setDialog(null)}
         onSwitch={setDialog}
         onDone={(text) => {
+          const done = dialog
           setDialog(null)
-          setNotice({ tone: 'success', text })
+          // Offer Undo for status moves and payments made from this dialog.
+          const undo = done?.name === 'record-payment' ? 'payment' : ['change-status', 'mark-claimed'].includes(done?.name) ? 'status' : null
+          setNotice({ tone: 'success', text, orderId: done?.order?.id, undo })
         }}
       />
     </main>

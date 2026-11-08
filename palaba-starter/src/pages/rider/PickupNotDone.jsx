@@ -9,6 +9,7 @@ import SegmentedControl from '../../components/SegmentedControl.jsx'
 import { cx } from '../../components/cx.js'
 import useApiData from '../../components/useApiData.js'
 import { useAuth } from '../../components/AuthProvider.jsx'
+import { useConfirm } from '../../components/ConfirmProvider.jsx'
 import { getRiderTrip, reportTripProblem } from '../../api/index.js'
 import { formatTime, toDateKey } from '../../utils/format.js'
 
@@ -34,6 +35,7 @@ export default function PickupNotDone({ trip: tripType = 'pickup' }) {
   const [note, setNote] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
+  const confirm = useConfirm()
   const title = `${tripType === 'pickup' ? 'Pickup' : 'Delivery'} not done · ${id}`
 
   if (!o) {
@@ -48,6 +50,13 @@ export default function PickupNotDone({ trip: tripType = 'pickup' }) {
   const needsNote = reason === 'Other' && !note.trim()
 
   async function submit() {
+    const ok = await confirm({
+      title: `Report ${o.id} as not done?`,
+      message: `“${reason === 'Other' ? note.trim() : reason}” · ${nextStep === 'try_later' ? 'you’ll try again later today' : 'the shop will call the customer'}. The shop sees this right away.`,
+      confirmLabel: 'Report',
+      tone: 'warning',
+    })
+    if (!ok) return
     setError('')
     setBusy(true)
     try {

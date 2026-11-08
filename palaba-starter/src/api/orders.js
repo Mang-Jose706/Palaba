@@ -14,7 +14,9 @@ import {
   canChangeRider,
   canEditOrder,
   canReschedulePickup,
+  canUndoPayment,
   isUnclaimed,
+  undoInfo,
   statusSteps,
 } from '../utils/orderRules.js'
 import { getData, mutate, newId, respond, snapshot } from './store.js'
@@ -301,6 +303,38 @@ export async function cancelOrder(id, { reason, note = '', refunded = false, by 
     if (o.payment) o.payment = { ...o.payment, refundedAt: new Date().toISOString(), refundedBy: by }
   })
   return changeStatus(id, 'cancelled', { by })
+}
+
+/**
+ * Undo the last status change (made by staff by mistake). No text is sent,
+ * and texts already sent can't be taken back.
+ */
+export async function undoLastStatus(id, { by = null } = {}) {
+  mutate((data) => {
+    const order = findOrder(data, id)
+    const undo = undoInfo(order)
+    if (!undo) throw new Error('This status change can’t be undone.')
+    const now = new Date().toISOString()
+    order.status = undo.to
+    // Clear what the undone step set.
+    if (undo.from === 'in_progress') order.startedAt = null
+    if (undo.from === 'ready') order.readyAt = null
+    if (['claimed', 'delivered'].includes(undo.from)) order.closedAt = null
+    if (undo.from === 'received') order.pickedUpAt = null
+    order.history = [...order.history, { status: undo.to, at: now, by, undo: true, undid: undo.from }]
+  })
+  return getOrder(id)
+}
+
+/** Remove a payment recorded by mistake (see canUndoPayment). */
+export async function undoPayment(id, { by = null } = {}) {
+  mutate((data) => {
+    const order = findOrder(data, id)
+    if (!canUndoPayment(order)) throw new Error('This payment can’t be removed.')
+    order.removedPayments = [...(order.removedPayments ?? []), { ...order.payment, removedAt: new Date().toISOString(), removedBy: by }]
+    order.payment = null
+  })
+  return getOrder(id)
 }
 
 /**

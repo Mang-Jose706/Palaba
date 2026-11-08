@@ -2,6 +2,7 @@ import { Outlet, matchPath, useLocation, useNavigate } from 'react-router-dom'
 import Sidebar from './Sidebar.jsx'
 import MobileHeader, { MobileNav } from './MobileHeader.jsx'
 import { useAuth } from './AuthProvider.jsx'
+import { useConfirm } from './ConfirmProvider.jsx'
 
 // Pages that show their own back-arrow bar on phones (no app header / bottom nav).
 const DETAIL_ROUTES = ['/orders/new', '/orders/:id', '/orders/:id/created']
@@ -9,11 +10,13 @@ const DETAIL_ROUTES = ['/orders/new', '/orders/:id', '/orders/:id/created']
 /** Staff/owner shell: left sidebar on desktop, top bar + bottom nav under 768px. */
 export default function AppLayout() {
   const { user, signOut } = useAuth()
+  const confirm = useConfirm()
   const navigate = useNavigate()
   const { pathname } = useLocation()
   const detail = DETAIL_ROUTES.some((pattern) => matchPath(pattern, pathname))
 
   async function handleSignOut() {
+    if (!(await confirm({ title: 'Log out?', message: 'You’ll need your username and password to log in again.', confirmLabel: 'Log out', tone: 'warning' }))) return
     await signOut()
     navigate('/login', { replace: true })
   }

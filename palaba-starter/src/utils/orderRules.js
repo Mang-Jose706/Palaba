@@ -137,6 +137,33 @@ export function canChangeRider(order) {
   return order.status === 'pickup_scheduled' || (isHomeDelivery(order) && ['received', 'in_progress', 'ready', 'out_for_delivery'].includes(order.status))
 }
 
+/**
+ * Undo a status change made by mistake (rule 3, exception): only the LAST
+ * change, only one step back, only when staff made it. A rider's pickup or
+ * delivery, a cancellation, and an undo itself can't be undone.
+ * @returns {{ from: string, to: string } | null}
+ */
+export function undoInfo(order) {
+  const history = order.history ?? []
+  if (history.length < 2) return null
+  const last = history.at(-1)
+  const prev = history.at(-2)
+  if (last.status !== order.status || last.undo) return null
+  if (['cancelled', 'pickup_scheduled'].includes(order.status)) return null
+  if (typeof last.by === 'string' && last.by.startsWith('r-')) return null // rider action
+  if (order.status === 'received' && (order.weighedBy === 'rider' || order.payment)) return null
+  if (!statusPath(order).includes(prev.status)) return null
+  if (statusPath(order).indexOf(prev.status) !== statusPath(order).indexOf(order.status) - 1) return null
+  return { from: order.status, to: prev.status }
+}
+
+/** Remove a payment recorded by mistake: staff-recorded, before the laundry leaves the shop. */
+export function canUndoPayment(order) {
+  if (!isPaid(order) || order.payment.refundedAt) return false
+  if (typeof order.payment.recordedBy === 'string' && order.payment.recordedBy.startsWith('r-')) return false
+  return !['claimed', 'delivered', 'cancelled', 'out_for_delivery'].includes(order.status)
+}
+
 /** Rule 8 at the door: "At the door" must be weighed there; "On delivery" may be. */
 export function riderMustWeigh(paymentOption) {
   return paymentOption === 'at_the_door'

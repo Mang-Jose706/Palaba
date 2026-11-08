@@ -3,6 +3,7 @@ import { Navigate, useNavigate } from 'react-router-dom'
 import Button from '../components/Button.jsx'
 import AuthCard, { AuthError, PasswordInput } from '../components/AuthCard.jsx'
 import { useAuth } from '../components/AuthProvider.jsx'
+import { useConfirm } from '../components/ConfirmProvider.jsx'
 import { changePassword } from '../api/index.js'
 
 /**
@@ -11,6 +12,7 @@ import { changePassword } from '../api/index.js'
  */
 export default function ChangePassword({ app = 'staff' }) {
   const { user, loading, refresh, signOut } = useAuth()
+  const confirm = useConfirm()
   const navigate = useNavigate()
   const [current, setCurrent] = useState('')
   const [next, setNext] = useState('')
@@ -72,6 +74,7 @@ export default function ChangePassword({ app = 'staff' }) {
             variant="ghost"
             fullWidth
             onClick={async () => {
+              if (!(await confirm({ title: 'Log out?', message: 'You’ll need your username and password to log in again.', confirmLabel: 'Log out', tone: 'warning' }))) return
               await signOut()
               navigate(app === 'rider' ? '/rider/login' : '/login', { replace: true })
             }}

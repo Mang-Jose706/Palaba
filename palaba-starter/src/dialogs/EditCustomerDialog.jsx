@@ -2,7 +2,8 @@ import { useState } from 'react'
 import Modal from '../components/Modal.jsx'
 import Button from '../components/Button.jsx'
 import Input from '../components/Input.jsx'
-import { createCustomer, updateCustomer } from '../api/index.js'
+import { createCustomer, deleteCustomer, updateCustomer } from '../api/index.js'
+import { useConfirm } from '../components/ConfirmProvider.jsx'
 import { formatMobile, isValidMobile } from '../utils/format.js'
 import { Caption, ErrorNotice, useSubmit } from './shared.jsx'
 
@@ -18,6 +19,7 @@ export default function EditCustomerDialog({ customer = {}, user, onClose, onDon
   })
   const [errors, setErrors] = useState({})
   const { busy, error, run } = useSubmit()
+  const confirm = useConfirm()
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
 
   function submit(e) {
@@ -73,6 +75,25 @@ export default function EditCustomerDialog({ customer = {}, user, onClose, onDon
       </form>
       <ErrorNotice error={error} />
       {!isNew && <Caption>Changes are saved with your name and the time.</Caption>}
+      {!isNew && customer.orderCount === 0 && (
+        <Button
+          variant="danger"
+          onClick={async () => {
+            const ok = await confirm({
+              title: `Delete ${customer.name}?`,
+              message: 'This customer has no orders. Their name, number and address will be removed. This can’t be undone.',
+              confirmLabel: 'Delete customer',
+              tone: 'danger',
+            })
+            if (ok) run(async () => {
+              await deleteCustomer(customer.id)
+              onDone(`${customer.name} was deleted.`)
+            })
+          }}
+        >
+          Delete customer
+        </Button>
+      )}
     </Modal>
   )
 }
