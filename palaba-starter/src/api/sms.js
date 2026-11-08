@@ -5,7 +5,7 @@
 // in Settings; "order_received" and "washing_started" are OFF by default.
 
 import { formatPeso, orderTotal } from '../utils/pricing.js'
-import { getData } from './store.js'
+import { getData, mutate } from './store.js'
 
 export const TEXT_KINDS = {
   ready_for_pickup: 'Ready for pickup',
@@ -57,5 +57,10 @@ export async function sendOrderText(kind, order) {
   if (!customer?.mobile) return { sent: false }
   const message = messageFor(kind, order, data.settings.shopName)
   console.log(`[SMS stub] ${TEXT_KINDS[kind]} → ${customer.mobile}: ${message}`)
-  return { sent: true, to: customer.mobile, message }
+  const entry = { kind, to: customer.mobile, at: new Date().toISOString() }
+  mutate((d) => {
+    const o = d.orders.find((x) => x.id === order.id)
+    if (o) o.texts = [...(o.texts ?? []), entry]
+  })
+  return { sent: true, ...entry, message }
 }

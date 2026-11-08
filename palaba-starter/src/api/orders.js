@@ -6,6 +6,7 @@ import { orderPrice, orderTotal, ratesFromSettings, roundKg, sessionsFor, SERVIC
 import {
   PAYMENT_METHODS,
   PAYMENT_OPTIONS,
+  paymentOptionsFor,
   canCancel,
   canRecordPayment,
   canTransition,
@@ -13,6 +14,7 @@ import {
   isUnclaimed,
 } from '../utils/orderRules.js'
 import { getData, mutate, newId, respond, snapshot } from './store.js'
+import { isValidMobile, normalizeMobile } from '../utils/format.js'
 import { sendOrderText } from './sms.js'
 
 // ── helpers ───────────────────────────────────────────────────────────
@@ -159,12 +161,13 @@ export async function getDashboardSummary(now = new Date()) {
  * @param {{ date, window, address, landmark? }} [input.pickup]  required for home pickup
  * @param {string} [input.riderId]
  * @param {string} [input.notes]
+ * @param {string} [input.promisedAt]  drop-off: when the customer was told to come back (ISO)
  */
 export async function createOrder(input) {
   const { type, service, paymentOption } = input
   if (!PAYMENT_OPTIONS[type]) throw new Error('Choose drop-off or home pickup')
   if (!SERVICES[service]) throw new Error('Choose a service')
-  if (!PAYMENT_OPTIONS[type].some((p) => p.id === paymentOption)) {
+  if (!paymentOptionsFor(type, input.returnMethod ?? 'shop_pickup').some((p) => p.id === paymentOption)) {
     throw new Error('Choose when the customer will pay')
   }
   if (type === 'drop_off' && !roundKg(input.kg)) throw new Error('Enter the weight')
@@ -180,7 +183,9 @@ export async function createOrder(input) {
     if (!customerId) {
       const c = input.customer
       if (!c?.name?.trim() || !c?.mobile?.trim()) throw new Error('Enter the customer name and mobile number')
-      const existing = data.customers.find((x) => x.mobile === c.mobile.trim())
+      if (!isValidMobile(c.mobile)) throw new Error('Enter an 11-digit mobile number starting with 09')
+      const mobile = normalizeMobile(c.mobile)
+      const existing = data.customers.find((x) => normalizeMobile(x.mobile) === mobile)
       if (existing) {
         customerId = existing.id
       } else {
@@ -188,7 +193,7 @@ export async function createOrder(input) {
         data.customers.push({
           id: customerId,
           name: c.name.trim(),
-          mobile: c.mobile.trim(),
+          mobile,
           address: c.address ?? input.pickup?.address ?? '',
           landmark: c.landmark ?? input.pickup?.landmark ?? '',
           createdAt: new Date().toISOString(),
@@ -215,6 +220,8 @@ export async function createOrder(input) {
       riderId: type === 'home_pickup' ? input.riderId ?? null : null,
       pickup: type === 'home_pickup' ? { landmark: '', ...input.pickup } : null,
       notes: input.notes ?? '',
+      promisedAt: type === 'drop_off' ? input.promisedAt ?? null : null,
+      texts: [],
       createdAt: now,
       startedAt: null,
       readyAt: null,

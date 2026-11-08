@@ -236,6 +236,17 @@ for (const o of orders) {
   else if (o.status === 'in_progress') o.startedAt = at(0, 9, 30)
   else o.startedAt = null
 
+  // Drop-offs: customer was told to come back the next day at 4:00 PM.
+  if (o.type === 'drop_off') {
+    const promised = new Date(o.createdAt)
+    promised.setDate(promised.getDate() + 1)
+    promised.setHours(16, 0, 0, 0)
+    o.promisedAt = promised.toISOString()
+  } else {
+    o.promisedAt = null
+  }
+  o.texts = []
+
   o.history = [{ status: o.type === 'home_pickup' ? 'pickup_scheduled' : 'received', at: o.createdAt }]
   if (o.type === 'home_pickup' && o.status !== 'pickup_scheduled') o.history.push({ status: 'received', at: o.createdAt })
   if (o.startedAt) o.history.push({ status: 'in_progress', at: o.startedAt })

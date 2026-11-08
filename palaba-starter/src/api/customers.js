@@ -3,6 +3,7 @@
 import { orderTotal } from '../utils/pricing.js'
 import { isPaid } from '../utils/orderRules.js'
 import { getData, mutate, newId, respond } from './store.js'
+import { isValidMobile, normalizeMobile } from '../utils/format.js'
 
 function withStats(data, customer) {
   const orders = data.orders.filter((o) => o.customerId === customer.id && o.status !== 'cancelled')
@@ -38,17 +39,20 @@ export async function getCustomer(id) {
 /** Look up a customer by mobile number (New order form autofill). */
 export async function findCustomerByMobile(mobile) {
   const data = getData()
-  const customer = data.customers.find((c) => c.mobile === mobile.trim())
+  const digits = normalizeMobile(mobile)
+  const customer = digits ? data.customers.find((c) => normalizeMobile(c.mobile) === digits) : null
   return respond(customer ? withStats(data, customer) : null)
 }
 
 export async function createCustomer({ name, mobile, address = '', landmark = '' }) {
   if (!name?.trim() || !mobile?.trim()) throw new Error('Enter the name and mobile number')
+  if (!isValidMobile(mobile)) throw new Error('Enter an 11-digit mobile number starting with 09')
+  const digits = normalizeMobile(mobile)
   const customer = mutate((data) => {
-    if (data.customers.some((c) => c.mobile === mobile.trim())) {
+    if (data.customers.some((c) => normalizeMobile(c.mobile) === digits)) {
       throw new Error('A customer with this mobile number already exists')
     }
-    const c = { id: newId('c'), name: name.trim(), mobile: mobile.trim(), address, landmark, createdAt: new Date().toISOString() }
+    const c = { id: newId('c'), name: name.trim(), mobile: digits, address, landmark, createdAt: new Date().toISOString() }
     data.customers.push(c)
     return c
   })
@@ -59,8 +63,12 @@ export async function updateCustomer(id, patch) {
   mutate((data) => {
     const customer = data.customers.find((c) => c.id === id)
     if (!customer) throw new Error('Customer not found')
-    if (patch.mobile && data.customers.some((c) => c.id !== id && c.mobile === patch.mobile.trim())) {
-      throw new Error('Another customer already uses this mobile number')
+    if (patch.mobile != null) {
+      if (!isValidMobile(patch.mobile)) throw new Error('Enter an 11-digit mobile number starting with 09')
+      patch = { ...patch, mobile: normalizeMobile(patch.mobile) }
+      if (data.customers.some((c) => c.id !== id && normalizeMobile(c.mobile) === patch.mobile)) {
+        throw new Error('Another customer already uses this mobile number')
+      }
     }
     for (const key of ['name', 'mobile', 'address', 'landmark']) {
       if (key in patch) customer[key] = typeof patch[key] === 'string' ? patch[key].trim() : patch[key]

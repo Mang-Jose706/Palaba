@@ -4,7 +4,7 @@
 
 import mockData from '../data/mock.js'
 
-const KEY = 'palaba:data:v1'
+const KEY = 'palaba:data:v2' // bump when the mock data shape changes
 const listeners = new Set()
 let memory = null
 

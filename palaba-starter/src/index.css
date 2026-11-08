@@ -42,6 +42,30 @@
   background-image: linear-gradient(90deg, var(--color-gradient-from), var(--color-gradient-to));
 }
 
+/* Printing a claim slip: only the .print-slip element is printed. */
+@media print {
+  @page {
+    margin: 10mm;
+  }
+  body {
+    background: #fff !important;
+  }
+  body * {
+    visibility: hidden;
+  }
+  .print-slip,
+  .print-slip * {
+    visibility: visible;
+  }
+  .print-slip {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 80mm;
+    border: 0 !important;
+    padding: 0 !important;
+  }
+}
+
 @layer base {
   body {
     @apply bg-bg font-sans text-navy antialiased;

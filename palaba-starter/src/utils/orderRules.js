@@ -30,6 +30,15 @@ export const PAYMENT_OPTIONS = {
   ],
 }
 
+/**
+ * Payment options allowed for a new order (rule 2). "On delivery" only makes
+ * sense when the rider brings the laundry back home.
+ */
+export function paymentOptionsFor(type, returnMethod = 'shop_pickup') {
+  const options = PAYMENT_OPTIONS[type] ?? []
+  return options.filter((o) => o.id !== 'on_delivery' || returnMethod === 'home_delivery')
+}
+
 export function paymentOptionLabel(option) {
   const all = [...PAYMENT_OPTIONS.drop_off, ...PAYMENT_OPTIONS.home_pickup]
   return all.find((o) => o.id === option)?.label ?? option

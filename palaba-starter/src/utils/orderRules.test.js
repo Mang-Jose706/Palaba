@@ -10,6 +10,7 @@ import {
   isUnclaimed,
   nextAction,
   paymentLabel,
+  paymentOptionsFor,
   unclaimedLabel,
 } from './orderRules.js'
 import { orderTotal } from './pricing.js'
@@ -115,6 +116,17 @@ describe('paymentLabel (rule 6)', () => {
 
   it('paid → "Paid"', () => {
     expect(paymentLabel(make({ status: 'ready', payment: paid }))).toBe('Paid')
+  })
+})
+
+describe('paymentOptionsFor (rule 2)', () => {
+  it('drop-off: Pay now or Pay at pickup', () => {
+    expect(paymentOptionsFor('drop_off').map((o) => o.label)).toEqual(['Pay now', 'Pay at pickup'])
+  })
+
+  it('home pickup: On delivery only when delivered back home', () => {
+    expect(paymentOptionsFor('home_pickup', 'home_delivery').map((o) => o.id)).toEqual(['at_the_door', 'after_weighing', 'on_delivery'])
+    expect(paymentOptionsFor('home_pickup', 'shop_pickup').map((o) => o.id)).toEqual(['at_the_door', 'after_weighing'])
   })
 })
 
