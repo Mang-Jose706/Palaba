@@ -1,5 +1,8 @@
 import { Routes, Route } from 'react-router-dom'
 
+import AppLayout from './components/AppLayout.jsx'
+import { RequireAuth } from './components/AuthProvider.jsx'
+
 import Login from './pages/Login.jsx'
 import Dashboard from './pages/Dashboard.jsx'
 import NewOrder from './pages/NewOrder.jsx'
@@ -25,18 +28,27 @@ import ComponentsPreview from './pages/ComponentsPreview.jsx'
 export default function App() {
   return (
     <Routes>
-      {/* Staff and owner */}
       <Route path="/login" element={<Login />} />
-      <Route path="/" element={<Dashboard />} />
-      <Route path="/orders" element={<Orders />} />
-      <Route path="/orders/new" element={<NewOrder />} />
-      <Route path="/orders/:id" element={<OrderDetails />} />
-      <Route path="/orders/:id/created" element={<OrderCreated />} />
-      <Route path="/customers" element={<Customers />} />
 
-      {/* Owner only */}
-      <Route path="/reports" element={<Reports />} />
-      <Route path="/settings" element={<Settings />} />
+      {/* Staff and owner: signed in, inside the sidebar layout */}
+      <Route
+        element={
+          <RequireAuth>
+            <AppLayout />
+          </RequireAuth>
+        }
+      >
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/orders" element={<Orders />} />
+        <Route path="/orders/new" element={<NewOrder />} />
+        <Route path="/orders/:id" element={<OrderDetails />} />
+        <Route path="/orders/:id/created" element={<OrderCreated />} />
+        <Route path="/customers" element={<Customers />} />
+
+        {/* Owner only */}
+        <Route path="/reports" element={<RequireAuth ownerOnly><Reports /></RequireAuth>} />
+        <Route path="/settings" element={<RequireAuth ownerOnly><Settings /></RequireAuth>} />
+      </Route>
 
       {/* Rider (phone) */}
       <Route path="/rider/login" element={<RiderLogin />} />

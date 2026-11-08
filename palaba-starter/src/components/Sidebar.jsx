@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom'
-import { ChartColumn, ClipboardList, PanelsTopLeft, SlidersHorizontal, Users } from 'lucide-react'
+import { ChartColumn, ClipboardList, LogOut, PanelsTopLeft, SlidersHorizontal, Users } from 'lucide-react'
 import Logo from './Logo.jsx'
 import { cx, focusRing } from './cx.js'
 
@@ -36,7 +36,7 @@ export function Avatar({ name, className }) {
  * @param {{ user?: { name: string, role: 'owner'|'staff' }, activePath?: string }} props
  *   `activePath` forces the active item (only for previews; normally the URL decides).
  */
-export default function Sidebar({ user, activePath, className }) {
+export default function Sidebar({ user, activePath, onSignOut, className }) {
   const items = NAV_ITEMS.filter((item) => !item.ownerOnly || user?.role === 'owner')
   return (
     <aside className={cx('flex h-full w-60 shrink-0 flex-col border-r border-line bg-surface px-5 pt-6 pb-6', className)}>
@@ -68,10 +68,21 @@ export default function Sidebar({ user, activePath, className }) {
       {user && (
         <div className="mt-auto flex items-center gap-3 px-2">
           <Avatar name={user.name} />
-          <div className="min-w-0">
+          <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-navy">{user.name}</p>
             <p className="text-xs text-muted capitalize">{user.role}</p>
           </div>
+          {onSignOut && (
+            <button
+              type="button"
+              onClick={onSignOut}
+              aria-label="Log out"
+              title="Log out"
+              className={cx('grid size-10 place-items-center rounded-control text-muted hover:bg-bg hover:text-navy', focusRing)}
+            >
+              <LogOut className="size-4.5" aria-hidden="true" />
+            </button>
+          )}
         </div>
       )}
     </aside>

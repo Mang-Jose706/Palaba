@@ -9,7 +9,7 @@ import { cx, focusRing } from './cx.js'
  * - variant "segment" (Orders): centered labels, active tab is a white pill
  *   with accent text; count shown as "All - 15".
  *
- * @param {{ tabs: { id: string, label: string, count?: number }[], value: string, onChange: (id: string) => void, variant?: 'board'|'segment', label?: string }} props
+ * @param {{ tabs: { id: string, label: string, shortLabel?: string, count?: number }[], value: string, onChange: (id: string) => void, variant?: 'board'|'segment', label?: string }} props
  */
 export default function Tabs({ tabs, value, onChange, variant = 'board', label = 'Tabs', className }) {
   const refs = useRef([])
@@ -49,7 +49,7 @@ export default function Tabs({ tabs, value, onChange, variant = 'board', label =
               'relative min-h-10 flex-1 rounded-control px-4 text-sm whitespace-nowrap transition',
               focusRing,
               variant === 'board' && [
-                'flex min-w-36 items-center justify-between gap-3 font-medium',
+                'flex min-w-0 items-center justify-between gap-2 font-medium max-md:px-2.5 md:min-w-36 md:gap-3',
                 active ? 'bg-active-fill text-accent' : 'text-navy hover:bg-white/60',
                 // thin blue divider before every tab except the first and the active one
                 i > 0 && !active &&
@@ -63,7 +63,14 @@ export default function Tabs({ tabs, value, onChange, variant = 'board', label =
           >
             {variant === 'board' ? (
               <>
-                <span>{tab.label}</span>
+                {tab.shortLabel ? (
+                  <span>
+                    <span className="md:hidden">{tab.shortLabel}</span>
+                    <span className="max-md:hidden">{tab.label}</span>
+                  </span>
+                ) : (
+                  <span>{tab.label}</span>
+                )}
                 {tab.count != null && <span className="font-semibold">{tab.count}</span>}
               </>
             ) : (

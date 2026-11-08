@@ -132,7 +132,7 @@ export function nextAction(order) {
       return { type: 'mark_ready', label: 'Mark ready', dialog: null }
     case 'ready':
       if (isHomeDelivery(order)) {
-        return { type: 'send_out', label: 'Send out for delivery', dialog: 'change-status' }
+        return { type: 'send_out', label: 'Send out', dialog: 'change-status' }
       }
       if (!isPaid(order)) {
         return {
@@ -180,6 +180,6 @@ export function unclaimedLabel(order, settings, now = new Date()) {
 export function paymentLabel(order) {
   if (isPaid(order)) return 'Paid'
   const total = orderTotal(order)
-  if (total == null) return 'Unpaid · due after weighing'
+  if (total == null) return 'Unpaid · not weighed yet'
   return `Unpaid · ${formatPeso(total)} due`
 }

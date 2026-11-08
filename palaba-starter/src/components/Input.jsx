@@ -33,9 +33,10 @@ export function Field({ id, label, hint, error, className, children }) {
 
 /**
  * Text input with a real <label>.
- * @param {{ label?: string, hint?: string, error?: string, icon?: React.ComponentType, suffix?: string }} props
+ * @param {{ label?: string, hint?: string, error?: string, icon?: React.ComponentType, suffix?: string, end?: React.ReactNode }} props
+ *   `end` is an interactive element inside the right edge (e.g. a show-password button).
  */
-export default function Input({ label, hint, error, icon: Icon, suffix, className, id, ...rest }) {
+export default function Input({ label, hint, error, icon: Icon, suffix, end, className, id, ...rest }) {
   const autoId = useId()
   const inputId = id ?? autoId
   return (
@@ -48,9 +49,10 @@ export default function Input({ label, hint, error, icon: Icon, suffix, classNam
           id={inputId}
           aria-invalid={error ? true : undefined}
           aria-describedby={error || hint ? `${inputId}-msg` : undefined}
-          className={cx(fieldClasses, Icon && 'pl-10', suffix && 'pr-12')}
+          className={cx(fieldClasses, Icon && 'pl-10', (suffix || end) && 'pr-12')}
           {...rest}
         />
+        {end && <span className="absolute top-1/2 right-1 -translate-y-1/2">{end}</span>}
         {suffix && (
           <span className="pointer-events-none absolute top-1/2 right-3 -translate-y-1/2 text-sm text-muted">{suffix}</span>
         )}

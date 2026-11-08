@@ -12,6 +12,19 @@ export function serviceSummary(order) {
 }
 
 /**
+ * What happens next when staff have no button (the rider or customer acts):
+ * "1:00–3:00 PM · Arnel" (pickup) / "With rider Arnel" (delivery).
+ */
+export function tripSummary(order) {
+  const rider = order.rider?.name?.split(' ')[0]
+  if (order.status === 'pickup_scheduled') {
+    return [order.pickup?.window, rider].filter(Boolean).join(' · ')
+  }
+  if (order.status === 'out_for_delivery') return rider ? `With rider ${rider}` : 'Out for delivery'
+  return ''
+}
+
+/**
  * One order on the Dashboard board: customer + code, service, payment badge
  * and exactly ONE next-step button from orderRules.nextAction.
  *
@@ -24,7 +37,7 @@ export default function OrderRow({ order, settings, onAction, showStatus = false
     <div
       className={cx(
         'grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-2 px-5 py-4',
-        'md:grid-cols-[minmax(0,1.3fr)_minmax(0,1.3fr)_minmax(0,1fr)_9rem]',
+        'md:grid-cols-[minmax(0,1.3fr)_minmax(0,1.3fr)_minmax(0,1fr)_10.5rem]',
         className,
       )}
     >
@@ -49,10 +62,17 @@ export default function OrderRow({ order, settings, onAction, showStatus = false
       </div>
 
       <div className="row-span-1 flex justify-end md:row-auto">
-        {action && (
-          <Button variant="secondary" className="w-full max-w-36" onClick={() => onAction?.(action, order)}>
+        {action ? (
+          <Button
+            variant="secondary"
+            className="w-full max-w-36"
+            onClick={() => onAction?.(action, order)}
+            aria-label={`${action.label}: ${order.id}`}
+          >
             {action.label}
           </Button>
+        ) : (
+          <span className="text-right text-[13px] leading-5 whitespace-nowrap text-muted">{tripSummary(order)}</span>
         )}
       </div>
     </div>
