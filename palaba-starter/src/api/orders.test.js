@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { cancelOrder, createOrder, getOrder, markReady, startWashing, weighOrder } from './orders.js'
+import { cancelOrder, createOrder, getOrder, getOrderByTrackingCode, markReady, startWashing, weighOrder } from './orders.js'
 import { resetData } from './store.js'
 
 beforeEach(() => {
@@ -87,6 +87,19 @@ describe('createOrder', () => {
   it("the rider's door weight is final (rule 8)", async () => {
     // LT-1044 in mock data was weighed by the rider
     await expect(weighOrder('LT-1044', 5)).rejects.toThrow()
+  })
+
+  it('public tracking data has no times, mobile numbers or full names', async () => {
+    const t = await getOrderByTrackingCode('d7s5pe') // LT-1044, ready for delivery
+    const json = JSON.stringify(t)
+    expect(json).not.toMatch(/\d{4}-\d{2}-\d{2}T/) // no ISO timestamps
+    expect(json).not.toMatch(/09\d{9}/) // no customer mobile
+    expect(json).not.toContain('Dizon') // first name only
+    expect(t.customerFirstName).toBe('Marites')
+    expect(t.steps.find((s) => s.state === 'current').status).toBe('ready')
+    expect(t.steps.every((s) => !('at' in s))).toBe(true)
+    expect(t.price.total).toBe(300)
+    await expect(getOrderByTrackingCode('nope')).rejects.toThrow()
   })
 
   it('Mark ready sends the Ready text with the amount due', async () => {

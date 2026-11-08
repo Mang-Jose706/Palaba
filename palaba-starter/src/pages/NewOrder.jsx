@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { MessageSquareText } from 'lucide-react'
+import { MobileTopBar } from '../components/MobileHeader.jsx'
+import Notice from '../components/Notice.jsx'
 import BackLink from '../components/BackLink.jsx'
 import Button from '../components/Button.jsx'
 import Card from '../components/Card.jsx'
@@ -17,7 +19,15 @@ import { PAYMENT_METHODS, paymentOptionsFor } from '../utils/orderRules.js'
 import { formatMobile, fromDateKey, isValidMobile, upcomingDays } from '../utils/format.js'
 
 const TYPES = [
-  { value: 'drop_off', label: 'Drop-off at the shop' },
+  {
+    value: 'drop_off',
+    label: (
+      <>
+        <span className="md:hidden">Drop-off</span>
+        <span className="max-md:hidden">Drop-off at the shop</span>
+      </>
+    ),
+  },
   { value: 'home_pickup', label: 'Home pickup' },
 ]
 
@@ -207,9 +217,11 @@ export default function NewOrder() {
   }))
 
   return (
-    <main className="mx-auto w-full max-w-[1200px] px-4 py-5 md:px-8 md:py-8">
-      <BackLink />
-      <h1 className="mt-2 text-2xl font-bold tracking-tight text-navy">New order</h1>
+    <>
+    <MobileTopBar title="New order" back="/" />
+    <main className="mx-auto w-full max-w-[1200px] px-4 py-4 md:px-8 md:py-8">
+      <BackLink className="max-md:hidden" />
+      <h1 className="mt-2 text-2xl font-bold tracking-tight text-navy max-md:sr-only">New order</h1>
 
       <SegmentedControl
         label="Order type"
@@ -217,7 +229,7 @@ export default function NewOrder() {
         value={type}
         onChange={switchType}
         size="lg"
-        className="mt-5 max-w-[420px] [&>button]:min-h-10"
+        className="mt-0 md:mt-5 md:max-w-[420px] [&>button]:min-h-10"
       />
 
       <form onSubmit={handleSubmit} noValidate className="mt-6 grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
@@ -274,7 +286,11 @@ export default function NewOrder() {
                   value={kg}
                   onChange={(e) => setKg(e.target.value)}
                   error={errors.kg}
-                  hint={billableKg && billableKg !== Number(kg) ? `Billed as ${billableKg} kg (rounded up)` : 'Rounded up to the whole kg'}
+                  hint={
+                    billableKg
+                      ? `${price.sessions > 1 || price.extraKg ? `1 session (up to 7 kg) + ${price.extraKg} extra kg at ${formatPeso(price.perExtraKg)} each` : '1 session (up to 7 kg)'}. Weights round up to the next kg.`
+                      : 'Weights round up to the next kg.'
+                  }
                 />
               </div>
             )}
@@ -374,6 +390,11 @@ export default function NewOrder() {
             </div>
           )}
 
+          {!isPickup && (
+            <Notice tone="info">
+              No text is sent now. The customer gets one text when the laundry is ready. The claim slip QR code shows the status until then.
+            </Notice>
+          )}
           {formError && (
             <p role="alert" className="rounded-control bg-danger-bg px-3 py-2 text-sm text-danger-fg">
               {formError}
@@ -383,11 +404,9 @@ export default function NewOrder() {
           <Button type="submit" fullWidth disabled={busy || settings.loading} className="min-h-12">
             {busy ? 'Saving…' : isPickup ? 'Schedule pickup' : 'Create order and print slip'}
           </Button>
-          {!isPickup && (
-            <p className="text-center text-xs text-muted">No text is sent now. The customer gets a text when the laundry is ready.</p>
-          )}
         </div>
       </form>
     </main>
+    </>
   )
 }

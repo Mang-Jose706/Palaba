@@ -54,7 +54,39 @@ export default function Customers() {
         </Notice>
       )}
 
-      <Table caption="Customers" className="mt-5">
+      {/* Phones: cards instead of the wide table */}
+      <ul className="mt-4 flex flex-col gap-3 md:hidden">
+        {customers.map((c) => (
+          <li key={c.id} className="flex items-start justify-between gap-3 rounded-card border border-line bg-surface p-4">
+            <div className="min-w-0">
+              <Link
+                to={`/orders?q=${encodeURIComponent(c.mobile)}&period=all`}
+                className={cx('rounded-sm font-medium text-navy hover:text-accent', focusRing)}
+              >
+                {c.name}
+              </Link>
+              <p className="text-sm text-muted">{formatMobile(c.mobile)}</p>
+              <p className="mt-1 text-[13px] text-muted">
+                {c.orderCount} {c.orderCount === 1 ? 'order' : 'orders'}
+                {c.lastOrderAt && ` · last ${formatShortDate(c.lastOrderAt)}`}
+              </p>
+            </div>
+            <div className="flex shrink-0 flex-col items-end gap-1">
+              {c.unpaidDue > 0 && <Badge tone="warning">{formatPeso(c.unpaidDue)} due</Badge>}
+              <button
+                type="button"
+                onClick={() => setEditing(c)}
+                aria-label={`Edit ${c.name}`}
+                className={cx('min-h-11 rounded-control px-3 text-sm font-medium text-accent hover:bg-tint', focusRing)}
+              >
+                Edit
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
+
+      <Table caption="Customers" className="mt-5 max-md:hidden">
         <thead>
           <tr>
             <Th>Customer</Th>

@@ -6,6 +6,7 @@ import Button from '../components/Button.jsx'
 import Card from '../components/Card.jsx'
 import Input from '../components/Input.jsx'
 import ClaimSlip from '../components/ClaimSlip.jsx'
+import { MobileTopBar } from '../components/MobileHeader.jsx'
 import useApiData from '../components/useApiData.js'
 import { getOrder, getSettings, trackingLink } from '../api/index.js'
 import { isPaid } from '../utils/orderRules.js'
@@ -65,7 +66,9 @@ export default function OrderCreated() {
   if (!o || !settings.data) return <main className="px-4 py-8 text-sm text-muted md:px-8">Loading…</main>
 
   return (
-    <main className="mx-auto w-full max-w-[1200px] px-4 py-5 md:px-8 md:py-8">
+    <>
+    <MobileTopBar title={o.type === 'home_pickup' ? 'Pickup scheduled' : 'Order created'} back="/" />
+    <main className="mx-auto w-full max-w-[1200px] px-4 py-4 md:px-8 md:py-8">
       <h1 className="text-2xl font-bold tracking-tight text-navy">{o.type === 'home_pickup' ? 'Pickup scheduled' : 'Order created'}</h1>
       <p className="mt-1 text-sm text-muted">{subtitle(o)}</p>
 
@@ -110,5 +113,6 @@ export default function OrderCreated() {
         </Card>
       </div>
     </main>
+    </>
   )
 }

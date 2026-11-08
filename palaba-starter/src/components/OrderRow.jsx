@@ -36,53 +36,62 @@ export default function OrderRow({ order, settings, onAction, showStatus = false
   return (
     <div
       className={cx(
-        'grid grid-cols-[1fr_auto] items-center gap-x-4 gap-y-2 px-5 py-4',
-        'md:grid-cols-[minmax(0,1.3fr)_minmax(0,1.3fr)_minmax(0,1fr)_10.5rem]',
+        // Phones: a card (name + code, service, badges, full-width button).
+        'flex flex-col gap-2 p-4',
+        // Desktop: one row in four columns.
+        'md:grid md:grid-cols-[minmax(0,1.3fr)_minmax(0,1.3fr)_minmax(0,1fr)_10.5rem] md:items-center md:gap-4 md:px-5',
         className,
       )}
     >
-      <div className="min-w-0">
+      <div className="flex min-w-0 items-start justify-between gap-3 md:block">
         <Link
           to={`/orders/${order.id}`}
           className={cx('block truncate rounded-sm font-medium text-navy hover:text-accent', focusRing)}
         >
           {order.customer?.name ?? 'Customer'}
         </Link>
-        <span className="text-sm text-muted">{order.id}</span>
+        <span className="shrink-0 text-sm text-muted">{order.id}</span>
       </div>
 
-      <span className="order-3 col-span-2 truncate text-sm text-muted md:order-none md:col-span-1">
-        {serviceSummary(order)}
-      </span>
+      <span className="truncate text-sm text-muted">{serviceSummary(order)}</span>
 
-      <div className="order-4 col-span-2 flex flex-wrap items-center gap-2 md:order-none md:col-span-1">
+      <div className="flex flex-wrap items-center gap-2">
         {showStatus && <StatusBadge status={order.status} />}
         <PaymentBadge order={order} />
         <UnclaimedBadge order={order} settings={settings} />
       </div>
 
-      <div className="row-span-1 flex justify-end md:row-auto">
+      <div className="flex md:justify-end">
         {action ? (
           <Button
             variant="secondary"
-            className="w-full max-w-36"
+            className="mt-1 w-full md:mt-0 md:max-w-36"
             onClick={() => onAction?.(action, order)}
             aria-label={`${action.label}: ${order.id}`}
           >
             {action.label}
           </Button>
         ) : (
-          <span className="text-right text-[13px] leading-5 whitespace-nowrap text-muted">{tripSummary(order)}</span>
+          <span className="text-[13px] leading-5 whitespace-nowrap text-muted md:text-right">{tripSummary(order)}</span>
         )}
       </div>
     </div>
   )
 }
 
-/** Card wrapper that puts OrderRows in a bordered list with dividers. */
+/**
+ * Wrapper for OrderRows: separate cards on phones, one bordered list with
+ * dividers on desktop.
+ */
 export function OrderList({ children, className }) {
   return (
-    <div className={cx('divide-y divide-line overflow-hidden rounded-card border border-line bg-surface', className)}>
+    <div
+      className={cx(
+        'flex flex-col gap-3 max-md:[&>*]:rounded-card max-md:[&>*]:border max-md:[&>*]:border-line max-md:[&>*]:bg-surface',
+        'md:gap-0 md:divide-y md:divide-line md:overflow-hidden md:rounded-card md:border md:border-line md:bg-surface',
+        className,
+      )}
+    >
       {children}
     </div>
   )

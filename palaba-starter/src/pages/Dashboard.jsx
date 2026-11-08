@@ -111,11 +111,22 @@ export default function Dashboard() {
   return (
     <main className="mx-auto flex w-full max-w-[1200px] flex-col gap-6 px-4 py-5 md:px-8 md:py-8">
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <p className="text-[13px] text-muted md:hidden">Today</p>
-          <h1 className="text-xl font-bold tracking-tight text-navy md:text-2xl">{todayHeading()}</h1>
+        <div className="flex items-center justify-between gap-4">
+          {/* Phones: "Today" + short date (staff-mobile-dashboard.html); desktop: full date (Figma). */}
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-navy">
+              <span className="md:hidden">Today</span>
+              <span className="max-md:hidden">{todayHeading()}</span>
+            </h1>
+            <p className="text-sm text-muted md:hidden">
+              {new Date().toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+            </p>
+          </div>
+          <Button to="/orders/new" icon={Plus} className="md:hidden">
+            New order
+          </Button>
         </div>
-        <div className="flex flex-col-reverse gap-3 md:flex-row md:items-center">
+        <div className="flex gap-3 md:items-center">
           <Input
             icon={Search}
             type="search"
@@ -123,15 +134,15 @@ export default function Dashboard() {
             aria-label="Search orders"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            className="md:w-[340px]"
+            className="flex-1 md:w-[340px] md:flex-none"
           />
-          <Button to="/orders/new" icon={Plus} className="md:px-5">
+          <Button to="/orders/new" icon={Plus} className="max-md:hidden md:px-5">
             New order
           </Button>
         </div>
       </header>
 
-      <section aria-label="Today's summary" className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4">
+      <section aria-label="Today's summary" className="grid grid-cols-2 gap-4 max-md:hidden lg:grid-cols-4">
         <StatCard label="Today's orders" value={s ? s.todaysOrders : '–'} />
         <StatCard label="Unclaimed orders" value={s ? s.unclaimedOrders : '–'} />
         <StatCard

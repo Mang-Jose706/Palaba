@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { Check, Copy, Printer } from 'lucide-react'
 import BackLink from '../components/BackLink.jsx'
+import { MobileTopBar } from '../components/MobileHeader.jsx'
 import Badge, { UnclaimedBadge } from '../components/Badge.jsx'
 import Button from '../components/Button.jsx'
 import Card from '../components/Card.jsx'
@@ -121,23 +122,32 @@ export default function OrderDetails() {
 
   const statusTone = STATUSES[o.status]?.tone ?? 'neutral'
 
-  return (
-    <main className="mx-auto w-full max-w-[1200px] px-4 py-5 md:px-8 md:py-8">
-      <BackLink />
+  const actionButtons = (
+    <>
+      <Button variant="secondary" icon={copied ? Check : Copy} onClick={copyLink}>
+        {copied ? 'Copied' : <><span className="md:hidden">Copy link</span><span className="max-md:hidden">Copy tracking link</span></>}
+      </Button>
+      <Button variant="secondary" icon={Printer} onClick={() => window.print()}>
+        Print slip
+      </Button>
+    </>
+  )
 
-      <header className="mt-3 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-[28px] leading-9 font-bold tracking-tight text-navy">{o.id}</h1>
+  return (
+    <>
+    <MobileTopBar title={o.id} back="/" />
+    <main className="mx-auto w-full max-w-[1200px] px-4 py-4 md:px-8 md:py-8">
+      <BackLink className="max-md:hidden" />
+
+      <header className="flex flex-col gap-4 md:mt-3 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex flex-wrap items-center gap-2 md:gap-3">
+          <h1 className="text-[28px] leading-9 font-bold tracking-tight text-navy max-md:sr-only">{o.id}</h1>
           <Badge tone={statusTone}>{statusHeadline(o)}</Badge>
           <UnclaimedBadge order={o} settings={settings.data} />
         </div>
-        <div className="flex flex-wrap gap-3">
-          <Button variant="secondary" icon={copied ? Check : Copy} onClick={copyLink}>
-            {copied ? 'Copied' : 'Copy tracking link'}
-          </Button>
-          <Button variant="secondary" icon={Printer} onClick={() => window.print()}>
-            Print slip
-          </Button>
+        {/* Desktop: actions in the header (Figma). Phones: below Payment (staff-mobile-order-details.html). */}
+        <div className="flex flex-wrap gap-3 max-md:hidden">
+          {actionButtons}
           {action && <Button onClick={runAction}>{action.label}</Button>}
         </div>
       </header>
@@ -148,7 +158,7 @@ export default function OrderDetails() {
         </Notice>
       )}
 
-      <div className="mt-6 grid grid-cols-1 items-start gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+      <div className="mt-4 grid grid-cols-1 items-start gap-4 md:mt-6 lg:grid-cols-[minmax(0,1fr)_360px]">
         {/* ── Left column ───────────────────────────────── */}
         <div className="flex flex-col gap-4">
           <SectionCard title="Items">
@@ -269,10 +279,25 @@ export default function OrderDetails() {
               <p className="text-sm text-muted">{o.notes || 'No notes yet.'}</p>
             )}
           </SectionCard>
+
+          <SectionCard title="Texts sent">
+            {o.texts?.length ? (
+              <ul className="flex flex-col gap-2 text-sm">
+                {o.texts.map((t) => (
+                  <li key={`${t.kind}-${t.at}`} className="flex justify-between gap-4">
+                    <span className="text-navy">{TEXT_KINDS[t.kind] ?? t.kind}</span>
+                    <span className="text-muted">{formatDateTime(t.at)}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-muted">No texts sent yet.</p>
+            )}
+          </SectionCard>
         </div>
 
-        {/* ── Right column ──────────────────────────────── */}
-        <div className="flex flex-col gap-4">
+        {/* ── Right column (first on phones) ────────────── */}
+        <div className="flex flex-col gap-4 max-lg:order-first">
           <SectionCard
             title="Customer"
             action={<LinkButton onClick={() => setDialog({ name: 'edit-customer', order: o, customer: o.customer })}>Edit</LinkButton>}
@@ -322,20 +347,15 @@ export default function OrderDetails() {
             )}
           </SectionCard>
 
-          <SectionCard title="Texts sent">
-            {o.texts?.length ? (
-              <ul className="flex flex-col gap-2 text-sm">
-                {o.texts.map((t) => (
-                  <li key={`${t.kind}-${t.at}`} className="flex justify-between gap-4">
-                    <span className="text-navy">{TEXT_KINDS[t.kind] ?? t.kind}</span>
-                    <span className="text-muted">{formatDateTime(t.at)}</span>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-sm text-muted">No texts sent yet.</p>
+          <div className="flex flex-col gap-3 md:hidden">
+            {action && (
+              <Button onClick={runAction} fullWidth>
+                {action.label}
+              </Button>
             )}
-          </SectionCard>
+            <div className="grid grid-cols-2 gap-3">{actionButtons}</div>
+          </div>
+
         </div>
       </div>
 
@@ -355,5 +375,6 @@ export default function OrderDetails() {
         }}
       />
     </main>
+    </>
   )
 }

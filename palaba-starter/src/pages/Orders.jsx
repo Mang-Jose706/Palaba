@@ -95,7 +95,43 @@ export default function Orders() {
         />
       </div>
 
-      <Table caption={`Orders, ${tab.label}`} className="mt-5">
+      {/* Phones: cards instead of the wide table */}
+      <ul className="mt-4 flex flex-col gap-3 md:hidden">
+        {!orders.loading && rows.length === 0 && (
+          <li className="rounded-card border border-dashed border-line bg-surface p-6 text-center text-sm text-muted">
+            {query ? `No orders match “${query}”.` : 'No orders here.'}
+          </li>
+        )}
+        {rows.map((o) => {
+          const total = orderTotal(o)
+          return (
+            <li key={o.id}>
+              <Link to={`/orders/${o.id}`} className={cx('block rounded-card border border-line bg-surface p-4', focusRing)}>
+                <div className="flex items-start justify-between gap-3">
+                  <span className="font-medium text-navy">{o.customer?.name}</span>
+                  <span className="text-sm text-accent">{o.id}</span>
+                </div>
+                <p className="mt-0.5 text-sm text-muted">
+                  {serviceSummary(o)} · {howLabel(o)}
+                </p>
+                <div className="mt-2 flex flex-wrap gap-1.5">
+                  <StatusBadge status={o.status} />
+                  {o.status !== 'cancelled' && <PaymentBadge order={o} />}
+                  <UnclaimedBadge order={o} settings={settings.data} />
+                </div>
+                <div className="mt-2 flex justify-between gap-3 text-sm">
+                  <span className="text-muted">{timeLabel(o)}</span>
+                  <span className={cx('font-semibold', o.status === 'cancelled' ? 'text-muted line-through' : 'text-navy')}>
+                    {total == null ? 'After weighing' : formatPeso(total)}
+                  </span>
+                </div>
+              </Link>
+            </li>
+          )
+        })}
+      </ul>
+
+      <Table caption={`Orders, ${tab.label}`} className="mt-5 max-md:hidden">
         <thead>
           <tr>
             <Th>Order</Th>

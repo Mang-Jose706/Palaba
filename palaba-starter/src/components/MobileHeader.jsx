@@ -1,5 +1,5 @@
 import { Link, NavLink, useLocation } from 'react-router-dom'
-import { ClipboardList, House, LogOut, Truck, Users } from 'lucide-react'
+import { ArrowLeft, ClipboardList, House, LogOut, Truck, Users } from 'lucide-react'
 import Logo from './Logo.jsx'
 import { Avatar } from './Sidebar.jsx'
 import { cx, focusRing } from './cx.js'
@@ -66,5 +66,17 @@ export function MobileNav({ className }) {
         )
       })}
     </nav>
+  )
+}
+
+/** Back-arrow bar for detail pages on phones (New order, Order details…). */
+export function MobileTopBar({ title, back = '/', className }) {
+  return (
+    <header className={cx('sticky top-0 z-30 flex min-h-14 items-center gap-2 border-b border-line bg-surface px-4 py-2 md:hidden', className)}>
+      <Link to={back} aria-label="Back" className={cx('-ml-2 grid size-12 place-items-center rounded-control text-navy', focusRing)}>
+        <ArrowLeft className="size-5" aria-hidden="true" />
+      </Link>
+      <span className="truncate text-lg font-semibold text-navy">{title}</span>
+    </header>
   )
 }

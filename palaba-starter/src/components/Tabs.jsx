@@ -49,11 +49,14 @@ export default function Tabs({ tabs, value, onChange, variant = 'board', label =
               'relative min-h-10 flex-1 rounded-control px-4 text-sm whitespace-nowrap transition',
               focusRing,
               variant === 'board' && [
-                'flex min-w-0 items-center justify-between gap-2 font-medium max-md:px-2.5 md:min-w-36 md:gap-3',
-                active ? 'bg-active-fill text-accent' : 'text-navy hover:bg-white/60',
-                // thin blue divider before every tab except the first and the active one
+                // Phones (staff-mobile-dashboard.html): white pill, "Start 3" centered.
+                'flex min-w-0 items-center justify-center gap-1.5 px-2 font-medium',
+                active ? 'max-md:bg-surface max-md:text-navy max-md:shadow-sm' : 'max-md:text-muted',
+                // Desktop (Figma): label left, count right, light-blue active fill, blue dividers.
+                'md:min-w-36 md:justify-between md:gap-3 md:px-4',
+                active ? 'md:bg-active-fill md:text-accent' : 'md:text-navy md:hover:bg-white/60',
                 i > 0 && !active &&
-                  'before:absolute before:top-1.5 before:bottom-1.5 before:left-0 before:w-px before:bg-accent/50',
+                  'md:before:absolute md:before:top-1.5 md:before:bottom-1.5 md:before:left-0 md:before:w-px md:before:bg-accent/50',
               ].filter(Boolean).join(' '),
               variant === 'segment' && [
                 'min-w-24 font-medium',
@@ -71,7 +74,7 @@ export default function Tabs({ tabs, value, onChange, variant = 'board', label =
                 ) : (
                   <span>{tab.label}</span>
                 )}
-                {tab.count != null && <span className="font-semibold">{tab.count}</span>}
+                {tab.count != null && <span className="font-semibold max-md:text-accent">{tab.count}</span>}
               </>
             ) : (
               <span>

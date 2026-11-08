@@ -12,6 +12,7 @@ import {
   canTransition,
   canWeigh,
   isUnclaimed,
+  statusSteps,
 } from '../utils/orderRules.js'
 import { getData, mutate, newId, respond, snapshot } from './store.js'
 import { isValidMobile, normalizeMobile } from '../utils/format.js'
@@ -82,27 +83,41 @@ export async function getOrder(id) {
   return respond(withCustomer(data, findOrder(data, id)))
 }
 
-/** For the public tracking page /t/:code. Returns only what a customer may see. */
+/**
+ * Public tracking page /t/:code (no login). Returns ONLY what the customer may
+ * see — first name, status steps WITHOUT times, price, payment state and how to
+ * reach the shop. No mobile numbers, no staff names, no timestamps.
+ */
 export async function getOrderByTrackingCode(code) {
   const data = getData()
   const order = data.orders.find((o) => o.trackingCode === code)
   if (!order) throw new Error('Order not found')
-  const full = withCustomer(data, order)
+  const customer = data.customers.find((c) => c.id === order.customerId)
+  const rider = order.riderId ? data.riders.find((r) => r.id === order.riderId) : null
   return respond({
-    id: full.id,
-    status: full.status,
-    service: full.service,
-    kg: full.kg,
-    type: full.type,
-    returnMethod: full.returnMethod,
-    paid: Boolean(full.payment),
-    total: orderTotal(full),
-    price: full.price,
-    customerFirstName: full.customer?.name.split(' ')[0] ?? '',
-    shopName: data.settings.shopName,
-    shopPhone: data.settings.shopPhone,
-    shopAddress: data.settings.shopAddress,
+    id: order.id,
+    status: order.status,
+    type: order.type,
+    returnMethod: order.returnMethod,
+    service: order.service,
+    kg: order.kg,
+    paymentOption: order.paymentOption,
+    paid: Boolean(order.payment) && !order.payment.refundedAt,
+    paymentMethod: order.payment?.method ?? null,
+    rates: order.rates,
+    price: orderPrice(order),
+    steps: statusSteps(order).map(({ status, state }) => ({ status, state })),
+    pickupDate: order.status === 'pickup_scheduled' ? order.pickup?.date ?? null : null,
+    customerFirstName: customer?.name.split(' ')[0] ?? '',
+    riderFirstName: rider?.name.split(' ')[0] ?? null,
+    shop: { name: data.settings.shopName, phone: data.settings.shopPhone, address: data.settings.shopAddress },
   })
+}
+
+/** Shop name and number for public pages (e.g. a tracking link that doesn't work). */
+export async function getShopContact() {
+  const { settings } = getData()
+  return respond({ name: settings.shopName, phone: settings.shopPhone, address: settings.shopAddress })
 }
 
 /** Dashboard tab counts and summary cards. */
