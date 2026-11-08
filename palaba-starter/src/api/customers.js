@@ -44,7 +44,7 @@ export async function findCustomerByMobile(mobile) {
   return respond(customer ? withStats(data, customer) : null)
 }
 
-export async function createCustomer({ name, mobile, address = '', landmark = '' }) {
+export async function createCustomer({ name, mobile, address = '', landmark = '', notes = '' }) {
   if (!name?.trim() || !mobile?.trim()) throw new Error('Enter the name and mobile number')
   if (!isValidMobile(mobile)) throw new Error('Enter an 11-digit mobile number starting with 09')
   const digits = normalizeMobile(mobile)
@@ -52,7 +52,7 @@ export async function createCustomer({ name, mobile, address = '', landmark = ''
     if (data.customers.some((c) => normalizeMobile(c.mobile) === digits)) {
       throw new Error('A customer with this mobile number already exists')
     }
-    const c = { id: newId('c'), name: name.trim(), mobile: digits, address, landmark, createdAt: new Date().toISOString() }
+    const c = { id: newId('c'), name: name.trim(), mobile: digits, address: address.trim(), landmark: landmark.trim(), notes: notes.trim(), createdAt: new Date().toISOString() }
     data.customers.push(c)
     return c
   })

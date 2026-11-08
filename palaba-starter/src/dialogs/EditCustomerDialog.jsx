@@ -2,11 +2,13 @@ import { useState } from 'react'
 import Modal from '../components/Modal.jsx'
 import Button from '../components/Button.jsx'
 import Input from '../components/Input.jsx'
-import { updateCustomer } from '../api/index.js'
+import { createCustomer, updateCustomer } from '../api/index.js'
 import { formatMobile, isValidMobile } from '../utils/format.js'
 import { Caption, ErrorNotice, useSubmit } from './shared.jsx'
 
-export default function EditCustomerDialog({ customer, user, onClose, onDone }) {
+/** Edit a customer, or add a new one when `customer` has no id. */
+export default function EditCustomerDialog({ customer = {}, user, onClose, onDone }) {
+  const isNew = !customer.id
   const [form, setForm] = useState({
     name: customer.name ?? '',
     mobile: formatMobile(customer.mobile ?? ''),
@@ -26,8 +28,13 @@ export default function EditCustomerDialog({ customer, user, onClose, onDone }) 
     setErrors(errs)
     if (Object.keys(errs).length) return
     run(async () => {
-      await updateCustomer(customer.id, form, { by: user?.id })
-      onDone(`Saved changes to ${form.name.trim()}.`)
+      if (isNew) {
+        await createCustomer(form)
+        onDone(`Added ${form.name.trim()}.`)
+      } else {
+        await updateCustomer(customer.id, form, { by: user?.id })
+        onDone(`Saved changes to ${form.name.trim()}.`)
+      }
     })
   }
 
@@ -35,14 +42,14 @@ export default function EditCustomerDialog({ customer, user, onClose, onDone }) 
     <Modal
       open
       onClose={onClose}
-      title="Edit customer"
+      title={isNew ? 'Add customer' : 'Edit customer'}
       footer={
         <>
           <Button variant="secondary" onClick={onClose}>
             Cancel
           </Button>
           <Button onClick={submit} disabled={busy}>
-            Save changes
+            {isNew ? 'Add customer' : 'Save changes'}
           </Button>
         </>
       }
@@ -65,7 +72,7 @@ export default function EditCustomerDialog({ customer, user, onClose, onDone }) 
         <button type="submit" hidden />
       </form>
       <ErrorNotice error={error} />
-      <Caption>Changes are saved with your name and the time.</Caption>
+      {!isNew && <Caption>Changes are saved with your name and the time.</Caption>}
     </Modal>
   )
 }

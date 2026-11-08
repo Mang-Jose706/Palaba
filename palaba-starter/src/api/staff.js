@@ -1,6 +1,7 @@
 // Staff, owner and rider accounts + mock sign-in.
 
 import { getData, mutate, newId, respond } from './store.js'
+import { isValidMobile, normalizeMobile } from '../utils/format.js'
 
 const SESSION_KEY = 'palaba:session'
 
@@ -32,10 +33,35 @@ export async function addUser({ role, name, mobile, username, password, active =
   if (!name?.trim() || !mobile?.trim() || !username?.trim() || !password) {
     throw new Error('Fill in all fields')
   }
+  if (!isValidMobile(mobile)) throw new Error('Enter an 11-digit mobile number starting with 09')
+  if (password.length < 6) throw new Error('The temporary password needs at least 6 characters')
   const user = mutate((data) => {
     if (allUsers(data).some((u) => u.username === username.trim())) throw new Error('That username is taken')
-    const u = { id: newId(role === 'rider' ? 'r' : 'u'), role, name: name.trim(), mobile: mobile.trim(), username: username.trim(), password, active, mustChangePassword: true }
+    const u = { id: newId(role === 'rider' ? 'r' : 'u'), role, name: name.trim(), mobile: normalizeMobile(mobile), username: username.trim(), password, active, mustChangePassword: true }
     data[role === 'rider' ? 'riders' : 'staff'].push(u)
+    return u
+  })
+  return respond(publicUser(user))
+}
+
+/**
+ * Edit a staff member or rider. Username can't change; a new password is optional.
+ * @param {{ name?, mobile?, active?, password? }} patch
+ */
+export async function updateUser(id, patch) {
+  const user = mutate((data) => {
+    const u = allUsers(data).find((x) => x.id === id)
+    if (!u) throw new Error('User not found')
+    if ('name' in patch && !patch.name?.trim()) throw new Error('Enter the full name')
+    if ('mobile' in patch && !isValidMobile(patch.mobile)) throw new Error('Enter an 11-digit mobile number starting with 09')
+    if (u.role === 'owner' && patch.active === false) throw new Error("The owner account can't be turned off")
+    if ('name' in patch) u.name = patch.name.trim()
+    if ('mobile' in patch) u.mobile = normalizeMobile(patch.mobile)
+    if ('active' in patch) u.active = Boolean(patch.active)
+    if (patch.password) {
+      u.password = patch.password
+      u.mustChangePassword = true
+    }
     return u
   })
   return respond(publicUser(user))

@@ -14,6 +14,7 @@ import Select from '../components/Select.jsx'
 import Modal from '../components/Modal.jsx'
 import OrderRow, { OrderList } from '../components/OrderRow.jsx'
 import OrderDialogs from '../dialogs/OrderDialogs.jsx'
+import AddStaffOrRiderDialog from '../dialogs/AddStaffOrRiderDialog.jsx'
 import { getSettings, listOrders, listRiders } from '../api/index.js'
 import { STATUSES, PAYMENT_METHODS } from '../utils/orderRules.js'
 import { formatPeso, orderTotal } from '../utils/pricing.js'
@@ -242,6 +243,9 @@ export default function ComponentsPreview() {
         </Section>
       </main>
 
+      {(dialog?.name === 'add-staff' || wanted === 'add-staff') && dialog?.name !== 'closed' && (
+        <AddStaffOrRiderDialog defaultRole="rider" onClose={() => setDialog({ name: 'closed' })} onDone={() => setDialog({ name: 'closed' })} />
+      )}
       <OrderDialogs dialog={dialog} onClose={() => setDialog(null)} onSwitch={setDialog} onDone={(t) => { setDialog(null); setLastAction(t) }} />
 
       <Modal
