@@ -10,9 +10,10 @@ import {
 } from './rider.js'
 import { changeStatus, getOrder } from './orders.js'
 import { resetData } from './store.js'
+import sampleData from '../test/sampleData.js'
 
 beforeEach(() => {
-  resetData()
+  resetData(sampleData)
   vi.spyOn(console, 'log').mockImplementation(() => {})
 })
 

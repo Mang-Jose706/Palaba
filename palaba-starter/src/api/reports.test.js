@@ -1,8 +1,9 @@
 import { beforeEach, describe, expect, it } from 'vitest'
 import { getReport } from './reports.js'
 import { resetData } from './store.js'
+import sampleData from '../test/sampleData.js'
 
-beforeEach(() => resetData())
+beforeEach(() => resetData(sampleData))
 
 describe('getReport', () => {
   it('has 7 days ending today and matching totals', async () => {

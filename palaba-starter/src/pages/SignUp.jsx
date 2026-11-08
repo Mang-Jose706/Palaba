@@ -7,7 +7,8 @@ import Button from '../components/Button.jsx'
 import SegmentedControl from '../components/SegmentedControl.jsx'
 import { useAuth } from '../components/AuthProvider.jsx'
 import { linkClass } from './Login.jsx'
-import { signUp } from '../api/index.js'
+import { getSetupState, signUp } from '../api/index.js'
+import useApiData from '../components/useApiData.js'
 import { formatMobile, isValidMobile } from '../utils/format.js'
 
 const ROLE_HELP = {
@@ -32,6 +33,9 @@ export default function SignUp() {
   const [done, setDone] = useState(null) // { name, username, role }
   const set = (key) => (e) => setForm((f) => ({ ...f, [key]: e.target.value }))
   const loginPath = role === 'rider' ? '/rider/login' : '/login'
+  const setup = useApiData(() => getSetupState(), [])
+  // A brand-new shop: this first account becomes the owner.
+  const firstOwner = setup.data ? !setup.data.hasOwner : false
 
   function validate() {
     const e = {}
@@ -87,6 +91,7 @@ export default function SignUp() {
   return (
     <AuthCard
       title="Sign up"
+      subtitle={firstOwner ? 'You’re setting up a new shop. This first account is the owner.' : undefined}
       footer={
         <p>
           Already have an account?{' '}
@@ -97,20 +102,22 @@ export default function SignUp() {
       }
     >
       <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1.5">
-          <span className="text-[13px] font-medium text-navy">I am a</span>
-          <SegmentedControl
-            label="Account type"
-            options={[
-              { value: 'staff', label: 'Staff' },
-              { value: 'rider', label: 'Rider' },
-            ]}
-            value={role}
-            onChange={setRole}
-            size="lg"
-          />
-          <p className="text-[13px] text-muted">{ROLE_HELP[role]}</p>
-        </div>
+        {!firstOwner && (
+          <div className="flex flex-col gap-1.5">
+            <span className="text-[13px] font-medium text-navy">I am a</span>
+            <SegmentedControl
+              label="Account type"
+              options={[
+                { value: 'staff', label: 'Staff' },
+                { value: 'rider', label: 'Rider' },
+              ]}
+              value={role}
+              onChange={setRole}
+              size="lg"
+            />
+            <p className="text-[13px] text-muted">{ROLE_HELP[role]}</p>
+          </div>
+        )}
 
         <Input label="Full name" icon={User} placeholder="Enter your full name" autoComplete="name" value={form.name} onChange={set('name')} error={errors.name} />
         <Input
@@ -153,9 +160,13 @@ export default function SignUp() {
 
         <AuthError>{error}</AuthError>
         <Button type="submit" fullWidth disabled={busy} className="mt-2 min-h-12">
-          {busy ? 'Creating account…' : 'Create account'}
+          {busy ? 'Creating account…' : firstOwner ? 'Create owner account' : 'Create account'}
         </Button>
-        <p className="text-center text-[13px] text-muted">The shop owner approves new accounts before they can log in.</p>
+        <p className="text-center text-[13px] text-muted">
+          {firstOwner
+            ? 'Next, add your shop details, staff and riders in Settings.'
+            : 'The shop owner approves new accounts before they can log in.'}
+        </p>
       </form>
     </AuthCard>
   )

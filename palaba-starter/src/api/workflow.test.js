@@ -5,11 +5,12 @@ import { addUser, changePassword, getCurrentUser, signIn, updateUser } from './s
 import { getRiderDay, reportTripProblem } from './rider.js'
 import { getSettings, updateSettings } from './settings.js'
 import { getData, mutate, resetData } from './store.js'
+import sampleData from '../test/sampleData.js'
 import { toDateKey } from '../utils/format.js'
 
 const store = {}
 beforeEach(() => {
-  resetData()
+  resetData(sampleData)
   vi.spyOn(console, 'log').mockImplementation(() => {})
   for (const k of Object.keys(store)) delete store[k]
   vi.stubGlobal('localStorage', {

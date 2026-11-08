@@ -9,6 +9,7 @@ import OrderRow, { OrderList } from '../components/OrderRow.jsx'
 import useApiData from '../components/useApiData.js'
 import { useAuth } from '../components/AuthProvider.jsx'
 import OrderDialogs, { dialogForAction } from '../dialogs/OrderDialogs.jsx'
+import SetupChecklist from '../components/SetupChecklist.jsx'
 import { getDashboardSummary, getSettings, listOrders, markReady, textToSend } from '../api/index.js'
 import { formatPeso } from '../utils/pricing.js'
 
@@ -150,6 +151,8 @@ export default function Dashboard() {
           </Button>
         </div>
       </header>
+
+      {user?.role === 'owner' && <SetupChecklist />}
 
       <section aria-label="Today's summary" className="grid grid-cols-2 gap-4 max-md:hidden lg:grid-cols-4">
         <StatCard label="Today's orders" value={s ? s.todaysOrders : '–'} />

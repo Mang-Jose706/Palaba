@@ -1,10 +1,12 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { approveUser, signIn, signUp } from './staff.js'
+import { approveUser, getSetupState, signIn, signUp } from './staff.js'
+import { getData } from './store.js'
 import { mutate, resetData } from './store.js'
+import sampleData from '../test/sampleData.js'
 
 const store = {}
 beforeEach(() => {
-  resetData()
+  resetData(sampleData)
   for (const k of Object.keys(store)) delete store[k]
   vi.stubGlobal('localStorage', {
     getItem: (k) => store[k] ?? null,
@@ -52,5 +54,28 @@ describe('sign up', () => {
 
   it('usernames are not case-sensitive at log in', async () => {
     expect((await signIn('ANA', 'palaba123')).username).toBe('ana')
+  })
+})
+
+describe('fresh start (no sample data)', () => {
+  it('the app starts with an empty shop and no accounts', async () => {
+    resetData() // the real starting data, not the test sample
+    const d = getData()
+    expect(d.orders).toEqual([])
+    expect(d.customers).toEqual([])
+    expect(d.staff).toEqual([])
+    expect(d.riders).toEqual([])
+    expect(d.settings.shopName).toBe('')
+    expect(d.settings.prices).toEqual({ wash_dry: 140, wash_dry_fold: 175 })
+    expect((await getSetupState()).hasOwner).toBe(false)
+  })
+
+  it('the first sign-up becomes the owner; the next one waits for approval', async () => {
+    resetData()
+    const first = await signUp(form)
+    expect(first.user.role).toBe('owner')
+    expect(first.pending).toBe(false)
+    const second = await signUp({ ...form, username: 'bea2', mobile: '09175556666' })
+    expect(second.pending).toBe(true)
   })
 })

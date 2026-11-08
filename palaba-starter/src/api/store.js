@@ -4,7 +4,7 @@
 
 import mockData from '../data/mock.js'
 
-const KEY = 'palaba:data:v2' // bump when the mock data shape changes
+const KEY = 'palaba:data:v3' // bump when the starting data changes (v3: empty shop)
 const listeners = new Set()
 let memory = null
 
@@ -65,9 +65,9 @@ export function subscribe(listener) {
   return () => listeners.delete(listener)
 }
 
-/** Restore the original mock data (useful while developing). */
-export function resetData() {
-  memory = clone(mockData)
+/** Start over with empty shop data, or with `seed` (tests use the sample shop). */
+export function resetData(seed = mockData) {
+  memory = clone(seed)
   persist()
   listeners.forEach((l) => l())
 }

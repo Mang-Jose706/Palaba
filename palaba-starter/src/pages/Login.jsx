@@ -5,19 +5,9 @@ import AuthCard, { AuthError, PasswordInput } from '../components/AuthCard.jsx'
 import Input from '../components/Input.jsx'
 import Button from '../components/Button.jsx'
 import { useAuth } from '../components/AuthProvider.jsx'
+import useApiData from '../components/useApiData.js'
+import { getSetupState } from '../api/index.js'
 import { cx, focusRing } from '../components/cx.js'
-
-// Mock accounts, shown only while developing (npm run dev) so nobody gets locked out.
-const DEMO_ACCOUNTS = {
-  staff: [
-    { username: 'ana', who: 'Owner' },
-    { username: 'bea', who: 'Staff' },
-  ],
-  rider: [
-    { username: 'arnel', who: 'Rider' },
-    { username: 'jun', who: 'Rider' },
-  ],
-}
 
 export const linkClass = cx('rounded-sm font-semibold text-accent hover:underline', focusRing)
 
@@ -34,6 +24,7 @@ export function LoginCard({ app = 'staff' }) {
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
+  const setup = useApiData(() => getSetupState(), [])
 
   const home = app === 'rider' ? '/rider' : '/'
   const from = location.state?.from?.pathname ?? home
@@ -100,6 +91,15 @@ export function LoginCard({ app = 'staff' }) {
         </>
       }
     >
+      {setup.data && !setup.data.hasOwner && (
+        <div className="mb-5 rounded-control bg-info-bg p-4 text-sm text-info-fg">
+          <p className="font-semibold">New shop? Start here.</p>
+          <p className="mt-0.5">There are no accounts yet. Create the owner account first, then add your staff and riders.</p>
+          <Button to="/signup" fullWidth className="mt-3">
+            Create the owner account
+          </Button>
+        </div>
+      )}
       {location.state?.message && (
         <p role="status" className="mb-4 rounded-control bg-success-bg px-3 py-2 text-sm text-success-fg">
           {location.state.message}
@@ -129,27 +129,6 @@ export function LoginCard({ app = 'staff' }) {
         </Button>
       </form>
 
-      {import.meta.env.DEV && (
-        <div className="mt-6 rounded-control border border-dashed border-line p-3 text-[13px] text-muted">
-          <p className="font-semibold text-navy">Demo accounts (password: palaba123)</p>
-          <div className="mt-1.5 flex flex-wrap gap-2">
-            {DEMO_ACCOUNTS[app].map((a) => (
-              <button
-                key={a.username}
-                type="button"
-                onClick={() => {
-                  setUsername(a.username)
-                  setPassword('palaba123')
-                  setError('')
-                }}
-                className={cx('min-h-control rounded-control bg-tint px-3 font-medium text-accent hover:bg-[#dce9fd]', focusRing)}
-              >
-                {a.who}: {a.username}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
     </AuthCard>
   )
 }

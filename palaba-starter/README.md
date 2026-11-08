@@ -43,15 +43,16 @@ npm test         # Vitest: pricing, order rules, API
 npm run build    # production build in dist/
 ```
 
-Mock accounts (password `palaba123` for all):
+The app starts empty: no accounts, customers or orders.
 
-| Who | Username | Starts at |
-|---|---|---|
-| Owner | `ana` | `/login` → Dashboard (also Reports, Settings) |
-| Staff | `bea` | `/login` → Dashboard |
-| Rider | `arnel` or `jun` | `/rider/login` → Today's trips |
-| Customer | no login | `/t/<tracking code>`, e.g. `/t/r9d2gh` (from the claim slip QR code) |
+1. Open the app and click **Create the owner account** (or go to `/signup`). The first account of a new shop is the **owner** and is signed in right away.
+2. Follow **Finish setting up your shop** on the Dashboard: add the shop name, mobile number and address in **Settings**, check the prices and fees (defaults: ₱140 / ₱175 per session, ₱50 pickup and delivery fees), and add staff and riders.
+3. Staff and riders can also sign up themselves at `/signup`; the owner approves them in **Settings → Staff and riders**.
 
-New people can create an account at `/signup` (staff or rider). The owner approves it in **Settings → Staff and riders** before it can log in. On a brand-new shop with no owner, the first sign-up becomes the owner. While developing, the log in page also shows the demo accounts as one-click buttons.
+| Who | Logs in at |
+|---|---|
+| Owner and staff | `/login` |
+| Riders | `/rider/login` |
+| Customers | no login: `/t/<tracking code>` from the claim slip QR code |
 
-Data is mock data (`src/data/mock.js`) saved in the browser's localStorage. To start over, clear the site's storage in the browser dev tools. Texts are not really sent: `src/api/sms.js` logs them to the browser console.
+Data is saved in the browser's localStorage (starting data: `src/data/mock.js`). The tests use a separate sample shop in `src/test/sampleData.js`. To start over, clear the site's storage in the browser dev tools. Texts are not really sent: `src/api/sms.js` logs them to the browser console.

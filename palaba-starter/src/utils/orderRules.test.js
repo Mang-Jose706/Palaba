@@ -16,7 +16,7 @@ import {
   unclaimedLabel,
 } from './orderRules.js'
 import { orderTotal } from './pricing.js'
-import { orders } from '../data/mock.js'
+import { orders } from '../test/sampleData.js'
 
 const rates = { sessionPrice: 175, pickupFee: 50, deliveryFee: 50 }
 const base = { id: 'LT-1', type: 'drop_off', returnMethod: 'shop_pickup', kg: 6, rates, payment: null }

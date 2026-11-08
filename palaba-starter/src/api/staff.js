@@ -144,6 +144,12 @@ export async function signUp({ role = 'staff', name, mobile, username, password 
   return respond({ user: publicUser(result.user), pending: result.pending })
 }
 
+/** Public: does this shop have an owner yet? (A new shop shows "Create the owner account".) */
+export async function getSetupState() {
+  const data = getData()
+  return respond({ hasOwner: data.staff.some((u) => u.role === 'owner' && u.active) })
+}
+
 /** Owner approves a signed-up account so it can sign in. */
 export async function approveUser(id) {
   return updateUser(id, { active: true })

@@ -1,9 +1,10 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { cancelOrder, createOrder, getOrder, getOrderByTrackingCode, markReady, startWashing, weighOrder } from './orders.js'
 import { resetData } from './store.js'
+import sampleData from '../test/sampleData.js'
 
 beforeEach(() => {
-  resetData()
+  resetData(sampleData)
   vi.spyOn(console, 'log').mockImplementation(() => {})
 })
 

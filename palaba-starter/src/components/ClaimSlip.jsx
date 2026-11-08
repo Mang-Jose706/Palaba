@@ -27,7 +27,7 @@ export default function ClaimSlip({ order, settings, trackingUrl, className }) {
   return (
     <article aria-label={`Claim slip ${order.id}`} className={cx('print-slip rounded-card border border-line bg-surface p-6', className)}>
       <header className="text-center">
-        <p className="text-lg font-semibold text-navy">{settings?.shopName}</p>
+        <p className="text-lg font-semibold text-navy">{settings?.shopName || 'Laundry shop'}</p>
         <p className="text-[13px] text-muted">{settings?.shopPhone}</p>
       </header>
 

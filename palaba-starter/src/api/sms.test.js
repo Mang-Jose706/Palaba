@@ -2,8 +2,9 @@ import { beforeEach, describe, expect, it } from 'vitest'
 import { textKindFor, textToSend } from './sms.js'
 import { updateSettings } from './settings.js'
 import { resetData } from './store.js'
+import sampleData from '../test/sampleData.js'
 
-beforeEach(() => resetData())
+beforeEach(() => resetData(sampleData))
 
 const shop = { type: 'drop_off', returnMethod: 'shop_pickup', paymentOption: 'pay_at_pickup' }
 const home = { type: 'home_pickup', returnMethod: 'home_delivery', paymentOption: 'after_weighing' }

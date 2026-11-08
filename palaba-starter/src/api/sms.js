@@ -82,7 +82,7 @@ export function textToSend(order, event) {
 /** The exact text a customer would get (for previews in dialogs). */
 export function previewOrderText(kind, order) {
   const data = getData()
-  return messageFor(kind, order, data.settings.shopName, data.settings.shopPhone)
+  return messageFor(kind, order, data.settings.shopName || 'Your laundry shop', data.settings.shopPhone)
 }
 
 /** Is this kind of text switched on in Settings? */
@@ -99,7 +99,7 @@ export async function sendOrderText(kind, order) {
   if (!data.settings.texts?.[kind]) return { sent: false }
   const customer = data.customers.find((c) => c.id === order.customerId)
   if (!customer?.mobile) return { sent: false }
-  const message = messageFor(kind, order, data.settings.shopName, data.settings.shopPhone)
+  const message = messageFor(kind, order, data.settings.shopName || 'Your laundry shop', data.settings.shopPhone)
   console.log(`[SMS stub] ${TEXT_KINDS[kind]} → ${customer.mobile}: ${message}`)
   const entry = { kind, to: customer.mobile, at: new Date().toISOString() }
   mutate((d) => {

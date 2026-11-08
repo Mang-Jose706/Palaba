@@ -107,7 +107,7 @@ function Shell({ shopName, children }) {
       <div className="mx-auto flex min-h-screen w-full max-w-[480px] flex-col bg-bg">
         <header className="flex min-h-14 items-center gap-3 border-b border-line bg-surface px-4 py-2">
           <Logo size="sm" showText={false} />
-          <span className="text-lg font-semibold text-navy">{shopName ?? 'Palaba'}</span>
+          <span className="text-lg font-semibold text-navy">{shopName || 'Palaba'}</span>
         </header>
         <main className="flex flex-1 flex-col gap-4 px-4 py-5">{children}</main>
       </div>
@@ -116,6 +116,7 @@ function Shell({ shopName, children }) {
 }
 
 function CallButton({ phone }) {
+  if (!phone) return null
   return (
     <a
       href={`tel:${phone?.replace(/\s/g, '')}`}
@@ -137,7 +138,7 @@ export default function Tracking() {
   const o = track.data
 
   useEffect(() => {
-    document.title = o ? `${o.id} · ${o.shop.name}` : 'Track your laundry'
+    document.title = o ? `${o.id} · ${o.shop.name || 'Palaba'}` : 'Track your laundry'
   }, [o])
 
   if (track.error) {
@@ -232,10 +233,12 @@ export default function Tracking() {
         </Card>
       )}
 
-      <Card className="p-4">
-        <p className="font-semibold text-navy">{o.shop.name}</p>
-        <p className="text-sm text-muted">{o.shop.address}</p>
-      </Card>
+      {(o.shop.name || o.shop.address) && (
+        <Card className="p-4">
+          <p className="font-semibold text-navy">{o.shop.name}</p>
+          <p className="text-sm text-muted">{o.shop.address}</p>
+        </Card>
+      )}
 
       <CallButton phone={o.shop.phone} />
     </Shell>
