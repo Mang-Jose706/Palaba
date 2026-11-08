@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+/* Palaba design tokens (see CLAUDE.md) */
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+
+  --color-navy: #232f5c;
+  --color-muted: #6b7393;
+  --color-accent: #3d7bea;
+  --color-active-fill: #abd8fa;
+  --color-tint: #eaf2fe;
+  --color-bg: #f5f8f7;
+  --color-surface: #ffffff;
+  --color-line: #dfe6e4;
+  --color-logo: #4cb2f5;
+  --color-gradient-from: #7493f7;
+  --color-gradient-to: #2dcde7;
+
+  /* Status colors: bg-success-bg text-success-fg, etc. */
+  --color-success-bg: #e3f5ea;
+  --color-success-fg: #146c3c;
+  --color-warning-bg: #fcf1dc;
+  --color-warning-fg: #83520a;
+  --color-danger-bg: #fbe9e7;
+  --color-danger-fg: #ad2a1c;
+  --color-info-bg: #e6f0fa;
+  --color-info-fg: #1b5a9e;
+  --color-neutral-bg: #edf0f2;
+  --color-neutral-fg: #465462;
+
+  /* Radius: rounded-card (12px), rounded-control (8px); badges use rounded-full */
+  --radius-card: 12px;
+  --radius-control: 8px;
+
+  /* Minimum touch heights: min-h-control (44px), min-h-control-mobile (48px) */
+  --spacing-control: 44px;
+  --spacing-control-mobile: 48px;
+}
+
+/* Primary buttons and logo tile: bg-brand-gradient */
+@utility bg-brand-gradient {
+  background-image: linear-gradient(90deg, var(--color-gradient-from), var(--color-gradient-to));
+}
+
+@layer base {
+  body {
+    @apply bg-bg font-sans text-navy antialiased;
+  }
+}
