@@ -1,12 +1,25 @@
 import { useState } from 'react'
-import { Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, Info, Lock, User } from 'lucide-react'
-import Logo from '../components/Logo.jsx'
-import Card from '../components/Card.jsx'
+import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
+import { Info, User } from 'lucide-react'
+import AuthCard, { AuthError, PasswordInput } from '../components/AuthCard.jsx'
 import Input from '../components/Input.jsx'
 import Button from '../components/Button.jsx'
 import { useAuth } from '../components/AuthProvider.jsx'
 import { cx, focusRing } from '../components/cx.js'
+
+// Mock accounts, shown only while developing (npm run dev) so nobody gets locked out.
+const DEMO_ACCOUNTS = {
+  staff: [
+    { username: 'ana', who: 'Owner' },
+    { username: 'bea', who: 'Staff' },
+  ],
+  rider: [
+    { username: 'arnel', who: 'Rider' },
+    { username: 'jun', who: 'Rider' },
+  ],
+}
+
+export const linkClass = cx('rounded-sm font-semibold text-accent hover:underline', focusRing)
 
 /**
  * Log in card shared by staff/owner (/login) and riders (/rider/login).
@@ -16,9 +29,8 @@ export function LoginCard({ app = 'staff' }) {
   const { user, loading, signIn } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const [username, setUsername] = useState('')
+  const [username, setUsername] = useState(location.state?.username ?? '')
   const [password, setPassword] = useState('')
-  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
@@ -47,63 +59,17 @@ export function LoginCard({ app = 'staff' }) {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-bg px-4 py-10">
-      <h1 className="sr-only">{app === 'rider' ? 'Rider log in' : 'Log in'}</h1>
-      <Card className="w-full max-w-[420px] px-6 py-9 sm:px-8">
-        <div className="flex flex-col items-center gap-5">
-          <Logo />
-          <p aria-hidden="true" className="text-[34px] leading-tight font-bold text-navy">
-            Log in
+    <AuthCard
+      title="Log in"
+      srTitle={app === 'rider' ? 'Rider log in' : 'Log in'}
+      footer={
+        <>
+          <p>
+            Don’t have an account?{' '}
+            <Link to={app === 'rider' ? '/signup?role=rider' : '/signup'} className={linkClass}>
+              Sign up
+            </Link>
           </p>
-        </div>
-
-        <form onSubmit={handleSubmit} noValidate className="mt-7 flex flex-col gap-4">
-          <Input
-            label="Username"
-            name="username"
-            icon={User}
-            placeholder="Enter your username"
-            autoComplete="username"
-            autoCapitalize="none"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            aria-invalid={error ? true : undefined}
-          />
-          <Input
-            label="Password"
-            name="password"
-            icon={Lock}
-            type={showPassword ? 'text' : 'password'}
-            placeholder="Enter your password"
-            autoComplete="current-password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            aria-invalid={error ? true : undefined}
-            end={
-              <button
-                type="button"
-                onClick={() => setShowPassword((v) => !v)}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-                aria-pressed={showPassword}
-                className={cx('grid size-11 place-items-center rounded-control text-navy hover:bg-bg', focusRing)}
-              >
-                {showPassword ? <EyeOff className="size-4.5" aria-hidden="true" /> : <Eye className="size-4.5" aria-hidden="true" />}
-              </button>
-            }
-          />
-
-          {error && (
-            <p role="alert" className="rounded-control bg-danger-bg px-3 py-2 text-sm text-danger-fg">
-              {error}
-            </p>
-          )}
-
-          <Button type="submit" fullWidth disabled={busy} className="mt-2 min-h-12">
-            {busy ? 'Logging in…' : 'Log in'}
-          </Button>
-        </form>
-
-        <div className="mt-10 flex flex-col items-center gap-2">
           <button
             type="button"
             onClick={() => setShowHelp((v) => !v)}
@@ -113,12 +79,78 @@ export function LoginCard({ app = 'staff' }) {
             <Info className="size-4" aria-hidden="true" />
             Forgot password?
           </button>
-          {showHelp && (
-            <p className="text-center text-[13px] text-muted">Ask the owner to reset your password.</p>
-          )}
+          {showHelp && <p className="text-center text-[13px]">Ask the owner to reset your password.</p>}
+          <p className="text-[13px]">
+            {app === 'rider' ? (
+              <>
+                Shop staff?{' '}
+                <Link to="/login" className={linkClass}>
+                  Staff log in
+                </Link>
+              </>
+            ) : (
+              <>
+                Rider?{' '}
+                <Link to="/rider/login" className={linkClass}>
+                  Rider log in
+                </Link>
+              </>
+            )}
+          </p>
+        </>
+      }
+    >
+      {location.state?.message && (
+        <p role="status" className="mb-4 rounded-control bg-success-bg px-3 py-2 text-sm text-success-fg">
+          {location.state.message}
+        </p>
+      )}
+      <form onSubmit={handleSubmit} noValidate className="flex flex-col gap-4">
+        <Input
+          label="Username"
+          name="username"
+          icon={User}
+          placeholder="Enter your username"
+          autoComplete="username"
+          autoCapitalize="none"
+          value={username}
+          onChange={(e) => setUsername(e.target.value)}
+          aria-invalid={error ? true : undefined}
+        />
+        <PasswordInput
+          name="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          aria-invalid={error ? true : undefined}
+        />
+        <AuthError>{error}</AuthError>
+        <Button type="submit" fullWidth disabled={busy} className="mt-2 min-h-12">
+          {busy ? 'Logging in…' : 'Log in'}
+        </Button>
+      </form>
+
+      {import.meta.env.DEV && (
+        <div className="mt-6 rounded-control border border-dashed border-line p-3 text-[13px] text-muted">
+          <p className="font-semibold text-navy">Demo accounts (password: palaba123)</p>
+          <div className="mt-1.5 flex flex-wrap gap-2">
+            {DEMO_ACCOUNTS[app].map((a) => (
+              <button
+                key={a.username}
+                type="button"
+                onClick={() => {
+                  setUsername(a.username)
+                  setPassword('palaba123')
+                  setError('')
+                }}
+                className={cx('min-h-control rounded-control bg-tint px-3 font-medium text-accent hover:bg-[#dce9fd]', focusRing)}
+              >
+                {a.who}: {a.username}
+              </button>
+            ))}
+          </div>
         </div>
-      </Card>
-    </main>
+      )}
+    </AuthCard>
   )
 }
 

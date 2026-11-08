@@ -36,7 +36,7 @@ export async function addUser({ role, name, mobile, username, password, active =
   if (!isValidMobile(mobile)) throw new Error('Enter an 11-digit mobile number starting with 09')
   if (password.length < 6) throw new Error('The temporary password needs at least 6 characters')
   const user = mutate((data) => {
-    if (allUsers(data).some((u) => u.username === username.trim())) throw new Error('That username is taken')
+    if (allUsers(data).some((u) => u.username.toLowerCase() === username.trim().toLowerCase())) throw new Error('That username is taken')
     const u = { id: newId(role === 'rider' ? 'r' : 'u'), role, name: name.trim(), mobile: normalizeMobile(mobile), username: username.trim(), password, active, mustChangePassword: true }
     data[role === 'rider' ? 'riders' : 'staff'].push(u)
     return u
@@ -57,7 +57,10 @@ export async function updateUser(id, patch) {
     if (u.role === 'owner' && patch.active === false) throw new Error("The owner account can't be turned off")
     if ('name' in patch) u.name = patch.name.trim()
     if ('mobile' in patch) u.mobile = normalizeMobile(patch.mobile)
-    if ('active' in patch) u.active = Boolean(patch.active)
+    if ('active' in patch) {
+      u.active = Boolean(patch.active)
+      if (u.active) u.pending = false // turning on = approving a sign-up
+    }
     if (patch.password) {
       u.password = patch.password
       u.mustChangePassword = true
@@ -82,8 +85,17 @@ export async function setUserActive(id, active) {
 export async function signIn(username, password, { app = 'staff' } = {}) {
   const data = getData()
   const pool = app === 'rider' ? data.riders : data.staff
-  const user = pool.find((u) => u.username === username?.trim() && u.password === password)
-  if (!user) throw new Error('Wrong username or password')
+  const name = username?.trim().toLowerCase()
+  const user = pool.find((u) => u.username.toLowerCase() === name && u.password === password)
+  if (!user) {
+    // Right account, wrong log in page: say where to go instead.
+    const other = (app === 'rider' ? data.staff : data.riders).find((u) => u.username.toLowerCase() === name && u.password === password)
+    if (other) {
+      throw new Error(app === 'rider' ? 'This is a staff account. Use the staff log in at /login.' : 'This is a rider account. Use the rider log in at /rider/login.')
+    }
+    throw new Error('Wrong username or password')
+  }
+  if (user.pending) throw new Error('Your account is waiting for the owner’s approval.')
   if (!user.active) throw new Error('This account is turned off. Ask the owner.')
   try {
     localStorage.setItem(SESSION_KEY, JSON.stringify({ id: user.id, app }))
@@ -91,6 +103,50 @@ export async function signIn(username, password, { app = 'staff' } = {}) {
     // ignore
   }
   return respond(publicUser(user))
+}
+
+/**
+ * Sign up (public). The account can't sign in until the owner approves it
+ * (Settings → Staff and riders), so strangers can't give themselves access.
+ * Exception: when the shop has no owner yet, the first sign-up becomes the
+ * owner and is active right away.
+ * @param {{ role: 'staff'|'rider', name, mobile, username, password }} input
+ * @returns {{ user, pending: boolean }}
+ */
+export async function signUp({ role = 'staff', name, mobile, username, password }) {
+  if (!['staff', 'rider'].includes(role)) throw new Error('Choose staff or rider')
+  if (!name?.trim()) throw new Error('Enter your full name')
+  if (!isValidMobile(mobile)) throw new Error('Enter an 11-digit mobile number starting with 09')
+  if (!/^[a-z0-9._-]{3,}$/i.test(username?.trim() ?? '')) throw new Error('Username: at least 3 letters or numbers, no spaces')
+  if (!password || password.length < 6) throw new Error('Password: at least 6 characters')
+  const result = mutate((data) => {
+    const uname = username.trim().toLowerCase()
+    if (allUsers(data).some((u) => u.username.toLowerCase() === uname)) throw new Error('That username is taken')
+    if (allUsers(data).some((u) => normalizeMobile(u.mobile) === normalizeMobile(mobile))) {
+      throw new Error('An account with this mobile number already exists')
+    }
+    const firstOwner = !data.staff.some((u) => u.role === 'owner' && u.active)
+    const finalRole = firstOwner ? 'owner' : role
+    const u = {
+      id: newId(finalRole === 'rider' ? 'r' : 'u'),
+      role: finalRole,
+      name: name.trim(),
+      mobile: normalizeMobile(mobile),
+      username: username.trim(),
+      password,
+      active: firstOwner,
+      pending: !firstOwner,
+      createdAt: new Date().toISOString(),
+    }
+    data[finalRole === 'rider' ? 'riders' : 'staff'].push(u)
+    return { user: u, pending: !firstOwner }
+  })
+  return respond({ user: publicUser(result.user), pending: result.pending })
+}
+
+/** Owner approves a signed-up account so it can sign in. */
+export async function approveUser(id) {
+  return updateUser(id, { active: true })
 }
 
 /**

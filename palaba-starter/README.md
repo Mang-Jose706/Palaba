@@ -52,4 +52,6 @@ Mock accounts (password `palaba123` for all):
 | Rider | `arnel` or `jun` | `/rider/login` → Today's trips |
 | Customer | no login | `/t/<tracking code>`, e.g. `/t/r9d2gh` (from the claim slip QR code) |
 
+New people can create an account at `/signup` (staff or rider). The owner approves it in **Settings → Staff and riders** before it can log in. On a brand-new shop with no owner, the first sign-up becomes the owner. While developing, the log in page also shows the demo accounts as one-click buttons.
+
 Data is mock data (`src/data/mock.js`) saved in the browser's localStorage. To start over, clear the site's storage in the browser dev tools. Texts are not really sent: `src/api/sms.js` logs them to the browser console.

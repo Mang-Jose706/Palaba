@@ -13,7 +13,7 @@ import Table, { Td, Th } from '../components/Table.jsx'
 import { cx, focusRing } from '../components/cx.js'
 import useApiData from '../components/useApiData.js'
 import AddStaffOrRiderDialog from '../dialogs/AddStaffOrRiderDialog.jsx'
-import { getSettings, listRiders, listStaff, previewOrderText, updateSettings } from '../api/index.js'
+import { approveUser, getSettings, listRiders, listStaff, previewOrderText, updateSettings } from '../api/index.js'
 import { SERVICES, SESSION_KG, computePrice, extraKgPrice, formatPeso, serviceLabel } from '../utils/pricing.js'
 import { formatMobile, isValidMobile } from '../utils/format.js'
 
@@ -325,7 +325,8 @@ function Accounts() {
   const riders = useApiData(() => listRiders(), [])
   const [dialog, setDialog] = useState(null) // { account? }
   const [msg, setMsg] = useFlash()
-  const people = [...(staff.data ?? []), ...(riders.data ?? [])]
+  // Sign-ups waiting for approval first.
+  const people = [...(staff.data ?? []), ...(riders.data ?? [])].sort((a, b) => Number(Boolean(b.pending)) - Number(Boolean(a.pending)))
   const roleLabel = { owner: 'Owner', staff: 'Staff', rider: 'Rider' }
 
   return (
@@ -355,8 +356,27 @@ function Accounts() {
               <Td className="font-medium whitespace-nowrap text-navy">{p.name}</Td>
               <Td className="text-navy">{roleLabel[p.role]}</Td>
               <Td className="whitespace-nowrap text-muted">{formatMobile(p.mobile)}</Td>
-              <Td>{p.active ? <Badge tone="info">Active</Badge> : <Badge tone="neutral">Inactive</Badge>}</Td>
+              <Td>
+                {p.pending ? (
+                  <Badge tone="warning">Waiting for approval</Badge>
+                ) : p.active ? (
+                  <Badge tone="info">Active</Badge>
+                ) : (
+                  <Badge tone="neutral">Inactive</Badge>
+                )}
+              </Td>
               <Td align="right">
+                {p.pending && (
+                  <TextButton
+                    aria-label={`Approve ${p.name}`}
+                    onClick={async () => {
+                      await approveUser(p.id)
+                      setMsg({ tone: 'success', text: `${p.name} can now log in.` })
+                    }}
+                  >
+                    Approve
+                  </TextButton>
+                )}
                 <TextButton
                   aria-label={`Edit ${p.name}`}
                   onClick={() => setDialog({ account: p })}

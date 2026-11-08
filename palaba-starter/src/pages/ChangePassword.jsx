@@ -1,10 +1,7 @@
 import { useState } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import Button from '../components/Button.jsx'
-import Card from '../components/Card.jsx'
-import Input from '../components/Input.jsx'
-import Logo from '../components/Logo.jsx'
-import Notice from '../components/Notice.jsx'
+import AuthCard, { AuthError, PasswordInput } from '../components/AuthCard.jsx'
 import { useAuth } from '../components/AuthProvider.jsx'
 import { changePassword } from '../api/index.js'
 
@@ -41,51 +38,52 @@ export default function ChangePassword({ app = 'staff' }) {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center bg-bg px-4 py-10">
-      <Card className="w-full max-w-[420px] px-6 py-8 sm:px-8">
-        <div className="flex flex-col items-center gap-4 text-center">
-          <Logo />
-          <h1 className="text-2xl font-bold text-navy">Set a new password</h1>
-          {user.mustChangePassword && (
-            <p className="text-sm text-muted">Hi {user.name.split(' ')[0]}! You signed in with a temporary password. Choose your own to continue.</p>
-          )}
-        </div>
-        <form onSubmit={submit} noValidate className="mt-6 flex flex-col gap-4">
-          <Input
-            label={user.mustChangePassword ? 'Temporary password' : 'Current password'}
-            type="password"
-            autoComplete="current-password"
-            value={current}
-            onChange={(e) => setCurrent(e.target.value)}
-          />
-          <Input label="New password" type="password" autoComplete="new-password" value={next} onChange={(e) => setNext(e.target.value)} hint="At least 6 characters." />
-          <Input label="New password again" type="password" autoComplete="new-password" value={again} onChange={(e) => setAgain(e.target.value)} />
-          {error && (
-            <Notice tone="danger" role="alert">
-              {error}
-            </Notice>
-          )}
-          <Button type="submit" fullWidth disabled={busy || !current || !next || !again} className="min-h-12">
-            Save new password
+    <AuthCard
+      title="New password"
+      srTitle="Set a new password"
+      subtitle={user.mustChangePassword ? `Hi ${user.name.split(' ')[0]}! You signed in with a temporary password. Choose your own to continue.` : undefined}
+    >
+      <form onSubmit={submit} noValidate className="flex flex-col gap-4">
+        <PasswordInput
+          label={user.mustChangePassword ? 'Temporary password' : 'Current password'}
+          value={current}
+          onChange={(e) => setCurrent(e.target.value)}
+        />
+        <PasswordInput
+          label="New password"
+          placeholder="At least 6 characters"
+          autoComplete="new-password"
+          value={next}
+          onChange={(e) => setNext(e.target.value)}
+        />
+        <PasswordInput
+          label="Confirm new password"
+          placeholder="Enter it again"
+          autoComplete="new-password"
+          value={again}
+          onChange={(e) => setAgain(e.target.value)}
+        />
+        <AuthError>{error}</AuthError>
+        <Button type="submit" fullWidth disabled={busy || !current || !next || !again} className="mt-2 min-h-12">
+          Save new password
+        </Button>
+        {user.mustChangePassword ? (
+          <Button
+            variant="ghost"
+            fullWidth
+            onClick={async () => {
+              await signOut()
+              navigate(app === 'rider' ? '/rider/login' : '/login', { replace: true })
+            }}
+          >
+            Log out
           </Button>
-          {user.mustChangePassword ? (
-            <Button
-              variant="ghost"
-              fullWidth
-              onClick={async () => {
-                await signOut()
-                navigate(app === 'rider' ? '/rider/login' : '/login', { replace: true })
-              }}
-            >
-              Log out
-            </Button>
-          ) : (
-            <Button variant="ghost" fullWidth to={home}>
-              Cancel
-            </Button>
-          )}
-        </form>
-      </Card>
-    </main>
+        ) : (
+          <Button variant="ghost" fullWidth to={home}>
+            Cancel
+          </Button>
+        )}
+      </form>
+    </AuthCard>
   )
 }
