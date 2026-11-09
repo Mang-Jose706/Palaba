@@ -9,7 +9,7 @@ export const settings = {
   shopName: '',
   shopPhone: '',
   shopAddress: '',
-  // Defaults from CLAUDE.md; the owner can change them in Settings.
+  // the owner can change them in Settings.
   prices: {
     wash_dry: 140,
     wash_dry_fold: 175,
