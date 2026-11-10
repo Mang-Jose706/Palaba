@@ -363,6 +363,14 @@ export default function NewOrder() {
                 <Select label="Pickup date" value={pickupDay} onChange={(e) => setPickupDay(e.target.value)} options={days} />
                 <Select label="Time window" value={pickupWindow} onChange={(e) => setPickupWindow(e.target.value)} options={windows} />
               </div>
+              <Select
+                label="Rider for the pickup"
+                value={riderId}
+                onChange={(e) => setRiderId(e.target.value)}
+                error={errors.riderId}
+                placeholder={riders.data?.length ? undefined : 'No active riders'}
+                options={(riders.data ?? []).map((r) => ({ value: r.id, label: r.name }))}
+              />
             </SectionCard>
           )}
 
@@ -394,14 +402,6 @@ export default function NewOrder() {
           {isPickup ? (
             <SectionCard title="After washing">
               <SegmentedControl label="After washing" options={RETURN_METHODS} value={returnMethod} onChange={setReturnMethod} size="lg" />
-              <Select
-                label="Assign rider"
-                value={riderId}
-                onChange={(e) => setRiderId(e.target.value)}
-                error={errors.riderId}
-                placeholder={riders.data?.length ? undefined : 'No active riders'}
-                options={(riders.data ?? []).map((r) => ({ value: r.id, label: r.name }))}
-              />
               <Input label="Notes for staff (optional)" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Handle the white shirts separately" />
             </SectionCard>
           ) : (
