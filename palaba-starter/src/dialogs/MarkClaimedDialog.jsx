@@ -80,7 +80,7 @@ export default function MarkClaimedDialog({ order, user, onClose, onDone, onColl
       <fieldset className="flex flex-col">
         <legend className="mb-1 text-sm font-semibold">Check before handing over</legend>
         <Checkbox checked={slipOk} onChange={setSlipOk} disabled={!paid}>
-          Customer showed the claim slip, or the name and mobile number match
+          Name and mobile number match
         </Checkbox>
       </fieldset>
 

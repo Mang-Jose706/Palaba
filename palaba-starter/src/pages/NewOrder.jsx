@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { MessageSquareText } from 'lucide-react'
+import { Info, MessageSquareText } from 'lucide-react'
 import { MobileTopBar } from '../components/MobileHeader.jsx'
 import Notice from '../components/Notice.jsx'
+import Modal from '../components/Modal.jsx'
+import { cx, focusRing } from '../components/cx.js'
 import CustomerSearchInput from '../components/CustomerSearchInput.jsx'
 import BackLink from '../components/BackLink.jsx'
 import Button from '../components/Button.jsx'
@@ -51,10 +53,13 @@ const PAYMENT_HELP = {
   on_delivery: 'the rider collects the full amount before handing over the laundry.',
 }
 
-function SectionCard({ title, children }) {
+function SectionCard({ title, action, children }) {
   return (
     <Card as="section" className="flex flex-col gap-4">
-      <h2 className="text-lg font-semibold text-navy">{title}</h2>
+      <div className="flex items-center gap-1">
+        <h2 className="text-lg font-semibold text-navy">{title}</h2>
+        {action}
+      </div>
       {children}
     </Card>
   )
@@ -75,6 +80,7 @@ export default function NewOrder() {
   const [mobile, setMobile] = useState('')
   const [name, setName] = useState('')
   const [returning, setReturning] = useState(null)
+  const [showPayHelp, setShowPayHelp] = useState(false)
   const returningRef = useRef(null)
   returningRef.current = returning
   // Service
@@ -419,7 +425,22 @@ export default function NewOrder() {
             )}
           </SectionCard>
 
-          <SectionCard title="When will the customer pay?">
+          <SectionCard
+            title="When will the customer pay?"
+            action={
+              isPickup && (
+                <button
+                  type="button"
+                  onClick={() => setShowPayHelp(true)}
+                  aria-label="What do these payment options mean?"
+                  title="What do these payment options mean?"
+                  className={cx('-my-2 grid size-11 place-items-center rounded-full text-muted hover:text-accent', focusRing)}
+                >
+                  <Info className="size-[18px]" aria-hidden="true" />
+                </button>
+              )
+            }
+          >
             <SegmentedControl
               label="When will the customer pay?"
               options={paymentOptionsFor(type, 'home_delivery').map((o) => ({
@@ -432,16 +453,9 @@ export default function NewOrder() {
             />
 
             {isPickup ? (
-              <div className="flex flex-col gap-3 text-[13px] leading-5 text-muted">
-                {paymentOptionsFor(type, 'home_delivery').map((o) => (
-                  <p key={o.id} className={paymentOption === o.id ? 'text-navy' : undefined}>
-                    <span className="font-semibold text-navy">{o.label}:</span> {PAYMENT_HELP[o.id]}
-                  </p>
-                ))}
-                {returnMethod === 'shop_pickup' && (
-                  <p className="text-xs">On delivery is only for orders delivered back home.</p>
-                )}
-              </div>
+              returnMethod === 'shop_pickup' && (
+                <p className="text-xs text-muted">On delivery is only for orders delivered back home.</p>
+              )
             ) : (
               <>
                 {paymentOption === 'pay_now' && (
@@ -496,6 +510,22 @@ export default function NewOrder() {
         </div>
       </form>
     </main>
+
+    <Modal
+      open={showPayHelp}
+      onClose={() => setShowPayHelp(false)}
+      title="When will the customer pay?"
+      size="sm"
+      footer={<Button onClick={() => setShowPayHelp(false)}>Got it</Button>}
+    >
+      <div className="flex flex-col gap-3 text-sm leading-6 text-muted">
+        {paymentOptionsFor('home_pickup', 'home_delivery').map((o) => (
+          <p key={o.id}>
+            <span className="font-semibold text-navy">{o.label}:</span> {PAYMENT_HELP[o.id]}
+          </p>
+        ))}
+      </div>
+    </Modal>
     </>
   )
 }
