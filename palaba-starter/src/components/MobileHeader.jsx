@@ -34,7 +34,7 @@ export default function MobileHeader({ user, onSignOut, className }) {
 
 const MOBILE_NAV = [
   { to: '/', label: 'Today', icon: House, match: (l) => l.pathname === '/' && !l.search.includes('tab=on_the_way') },
-  { to: '/orders', label: 'Orders', icon: ClipboardList, match: (l) => l.pathname.startsWith('/orders') },
+  { to: '/orders', label: 'Orders', icon: ClipboardList, match: (l) => l.pathname.startsWith('/orders') && l.pathname !== '/orders/new' },
   { to: '/?tab=on_the_way', label: 'Trips', icon: Truck, match: (l) => l.pathname === '/' && l.search.includes('tab=on_the_way') },
   { to: '/customers', label: 'Customers', icon: Users, match: (l) => l.pathname.startsWith('/customers') },
 ]

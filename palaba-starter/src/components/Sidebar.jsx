@@ -1,11 +1,11 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import { ChartColumn, ClipboardList, LogOut, PanelsTopLeft, SlidersHorizontal, Users } from 'lucide-react'
 import Logo from './Logo.jsx'
 import { cx, focusRing } from './cx.js'
 
 export const NAV_ITEMS = [
   { to: '/', label: 'Dashboard', icon: PanelsTopLeft, end: true },
-  { to: '/orders', label: 'Orders', icon: ClipboardList },
+  { to: '/orders', label: 'Orders', icon: ClipboardList, notOn: ['/orders/new'] },
   { to: '/customers', label: 'Customers', icon: Users },
   { to: '/reports', label: 'Reports', icon: ChartColumn, ownerOnly: true },
   { to: '/settings', label: 'Settings', icon: SlidersHorizontal, ownerOnly: true },
@@ -38,6 +38,7 @@ export function Avatar({ name, className }) {
  */
 export default function Sidebar({ user, activePath, onSignOut, className }) {
   const items = NAV_ITEMS.filter((item) => !item.ownerOnly || user?.role === 'owner')
+  const { pathname } = useLocation()
   return (
     <aside className={cx('flex h-full w-60 shrink-0 flex-col border-r border-line bg-surface px-5 pt-6 pb-6', className)}>
       <NavLink to="/" className={cx('self-start rounded-control', focusRing)} aria-label="Palaba home">
@@ -45,13 +46,13 @@ export default function Sidebar({ user, activePath, onSignOut, className }) {
       </NavLink>
 
       <nav aria-label="Main" className="mt-6 flex flex-col gap-1">
-        {items.map(({ to, label, icon: Icon, end }) => (
+        {items.map(({ to, label, icon: Icon, end, notOn }) => (
           <NavLink
             key={to}
             to={to}
             end={end}
             className={({ isActive: routeActive }) => {
-              const isActive = activePath != null ? activePath === to : routeActive
+              const isActive = activePath != null ? activePath === to : routeActive && !notOn?.includes(pathname)
               return cx(
                 'flex min-h-control items-center gap-3 rounded-control px-4 text-[15px] transition',
                 isActive ? 'bg-active-fill font-medium text-navy' : 'text-navy/85 hover:bg-bg',
