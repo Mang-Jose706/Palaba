@@ -5,6 +5,7 @@ import { cx, focusRing } from './cx.js'
 import { nextAction, openTripIssue } from '../utils/orderRules.js'
 import { formatShortDate, fromDateKey, toDateKey } from '../utils/format.js'
 import { roundKg, serviceLabel } from '../utils/pricing.js'
+import { useFromHere } from './backTo.js'
 
 /** "Wash, dry & fold · 6 kg" or "… · to weigh". */
 export function serviceSummary(order) {
@@ -35,6 +36,7 @@ export function tripSummary(order) {
  *   `order` comes from the API (has `customer`).
  */
 export default function OrderRow({ order, settings, onAction, showStatus = false, className }) {
+  const fromHere = useFromHere()
   const action = nextAction(order)
   return (
     <div
@@ -49,6 +51,7 @@ export default function OrderRow({ order, settings, onAction, showStatus = false
       <div className="flex min-w-0 items-start justify-between gap-3 md:block">
         <Link
           to={`/orders/${order.id}`}
+          state={fromHere}
           className={cx('block truncate rounded-sm font-medium text-navy hover:text-accent', focusRing)}
         >
           {order.customer?.name ?? 'Customer'}

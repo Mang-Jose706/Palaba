@@ -14,6 +14,7 @@ import { getSettings, listOrders } from '../api/index.js'
 import { formatPeso, orderTotal } from '../utils/pricing.js'
 import { howLabel, timeLabel } from '../utils/orderDisplay.js'
 import { isClosed } from '../utils/orderRules.js'
+import { useFromHere } from '../components/backTo.js'
 
 const TABS = [
   { id: 'all', label: 'All', statuses: null },
@@ -32,6 +33,7 @@ const PERIODS = [
 ]
 
 export default function Orders() {
+  const fromHere = useFromHere()
   const navigate = useNavigate()
   const [params, setParams] = useSearchParams()
   const tabId = TABS.some((t) => t.id === params.get('tab')) ? params.get('tab') : 'all'
@@ -107,7 +109,7 @@ export default function Orders() {
           const total = orderTotal(o)
           return (
             <li key={o.id}>
-              <Link to={`/orders/${o.id}`} className={cx('block rounded-card border border-line bg-surface p-4', focusRing)}>
+              <Link to={`/orders/${o.id}`} state={fromHere} className={cx('block rounded-card border border-line bg-surface p-4', focusRing)}>
                 <div className="flex items-start justify-between gap-3">
                   <span className="font-medium text-navy">{o.customer?.name}</span>
                   <span className="text-sm text-accent">{o.id}</span>
@@ -166,12 +168,12 @@ export default function Orders() {
               <tr
                 key={o.id}
                 onClick={(e) => {
-                  if (!e.target.closest('a')) navigate(`/orders/${o.id}`)
+                  if (!e.target.closest('a')) navigate(`/orders/${o.id}`, { state: fromHere })
                 }}
                 className="cursor-pointer hover:bg-bg"
               >
                 <Td>
-                  <Link to={`/orders/${o.id}`} className={cx('rounded-sm font-medium whitespace-nowrap text-accent hover:underline', focusRing)}>
+                  <Link to={`/orders/${o.id}`} state={fromHere} className={cx('rounded-sm font-medium whitespace-nowrap text-accent hover:underline', focusRing)}>
                     {o.id}
                   </Link>
                 </Td>

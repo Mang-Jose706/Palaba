@@ -9,9 +9,11 @@ import useApiData from '../components/useApiData.js'
 import { getReport } from '../api/index.js'
 import { formatPeso } from '../utils/pricing.js'
 import { formatShortDate } from '../utils/format.js'
+import { useFromHere } from '../components/backTo.js'
 
 // Owner only (route guarded in App.jsx). No SMS costs anywhere (rule 5).
 export default function Reports() {
+  const fromHere = useFromHere()
   const report = useApiData(() => getReport(), [])
   const r = report.data
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
@@ -100,6 +102,7 @@ export default function Reports() {
                   <Td align="right">
                     <Link
                       to={`/orders/${o.id}`}
+                      state={fromHere}
                       aria-label={`View ${o.id}`}
                       className={cx('rounded-sm px-2 py-1 text-sm font-medium text-accent hover:underline', focusRing)}
                     >

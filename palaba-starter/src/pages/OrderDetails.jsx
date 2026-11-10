@@ -43,6 +43,7 @@ import {
 } from '../utils/orderRules.js'
 import { formatPeso, orderPrice, roundKg, sessionsFor } from '../utils/pricing.js'
 import { formatDateTime, formatLongDay, formatMobile, formatShortDate, fromDateKey } from '../utils/format.js'
+import { useBackTo } from '../components/backTo.js'
 
 function SectionCard({ title, action, children, className }) {
   return (
@@ -74,6 +75,7 @@ function Row({ label, children, strong }) {
 }
 
 export default function OrderDetails() {
+  const backTo = useBackTo()
   const { id } = useParams()
   const { user } = useAuth()
   const order = useApiData(() => getOrder(id), [id])
@@ -90,7 +92,7 @@ export default function OrderDetails() {
   if (order.error) {
     return (
       <main className={pageShell}>
-        <BackLink />
+        <BackLink to={backTo}>Back</BackLink>
         <p className="mt-4 text-muted">Order {id} was not found.</p>
       </main>
     )
@@ -171,9 +173,9 @@ export default function OrderDetails() {
 
   return (
     <>
-    <MobileTopBar title={o.id} back="/" />
+    <MobileTopBar title={o.id} back={backTo} />
     <main className={pageShell}>
-      <BackLink className="max-md:hidden" />
+      <BackLink to={backTo} className="max-md:hidden">Back</BackLink>
 
       <header className="flex flex-col gap-4 md:mt-3 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap items-center gap-2 md:gap-3">
