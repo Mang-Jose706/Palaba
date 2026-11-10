@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom'
-import { Bike, ChevronRight, Info, Store, User } from 'lucide-react'
+import { Bike, Info, Store, User } from 'lucide-react'
 import AuthCard, { AuthError, PasswordInput } from '../components/AuthCard.jsx'
 import Input from '../components/Input.jsx'
 import Button from '../components/Button.jsx'
+import SegmentedControl from '../components/SegmentedControl.jsx'
 import { useAuth } from '../components/AuthProvider.jsx'
 import useApiData from '../components/useApiData.js'
 import { getSetupState } from '../api/index.js'
@@ -25,6 +26,12 @@ export function LoginCard({ app = 'staff' }) {
   const [busy, setBusy] = useState(false)
   const [showHelp, setShowHelp] = useState(false)
   const setup = useApiData(() => getSetupState(), [])
+  const toggleRef = useRef(null)
+
+  // After the Staff / Rider switch loads the other page, keep focus on the switch.
+  useEffect(() => {
+    if (location.state?.switched) toggleRef.current?.querySelector('[aria-checked="true"]')?.focus()
+  }, [location.state])
 
   const home = app === 'rider' ? '/rider' : '/'
   const from = location.state?.from?.pathname ?? home
@@ -62,10 +69,24 @@ export function LoginCard({ app = 'staff' }) {
               Sign up
             </Link>
           </p>
-          <SwitchAppLink app={app} />
         </>
       }
     >
+      <div ref={toggleRef}>
+      <SegmentedControl
+        label="Log in as"
+        size="lg"
+        className="mb-6"
+        value={app}
+        onChange={(next) => {
+          if (next !== app) navigate(next === 'rider' ? '/rider/login' : '/login', { replace: true, state: { username, switched: true } })
+        }}
+        options={[
+          { value: 'staff', label: <span className="inline-flex items-center gap-2"><Store className="size-4" aria-hidden="true" />Staff / Owner</span> },
+          { value: 'rider', label: <span className="inline-flex items-center gap-2"><Bike className="size-4" aria-hidden="true" />Rider</span> },
+        ]}
+      />
+      </div>
       {setup.data && !setup.data.hasOwner && (
         <div className="mb-5 rounded-control bg-info-bg p-4 text-sm text-info-fg">
           <p className="font-semibold">New shop? Start here.</p>
@@ -122,34 +143,6 @@ export function LoginCard({ app = 'staff' }) {
       </form>
 
     </AuthCard>
-  )
-}
-
-/** Row that sends staff to the rider log in, and riders back to the shop log in. */
-function SwitchAppLink({ app }) {
-  const rider = app === 'rider'
-  const Icon = rider ? Store : Bike
-  return (
-    <div className="mt-4 flex w-full flex-col gap-4 self-stretch">
-      <div className="flex items-center gap-3 text-xs text-muted" aria-hidden="true">
-        <span className="h-px flex-1 bg-line" />
-        or
-        <span className="h-px flex-1 bg-line" />
-      </div>
-      <Link
-        to={rider ? '/login' : '/rider/login'}
-        className={cx('flex items-center gap-3 rounded-control border border-line px-4 py-3 text-left transition-colors hover:border-accent hover:bg-tint', focusRing)}
-      >
-        <span className="grid size-10 shrink-0 place-items-center rounded-full bg-tint text-accent">
-          <Icon className="size-5" aria-hidden="true" />
-        </span>
-        <span className="flex min-w-0 flex-1 flex-col">
-          <span className="text-sm font-semibold text-navy">{rider ? 'Shop staff or owner?' : 'Are you a rider?'}</span>
-          <span className="text-[13px] text-muted">{rider ? 'Log in to the shop' : 'Log in to see today’s trips'}</span>
-        </span>
-        <ChevronRight className="size-5 shrink-0 text-muted" aria-hidden="true" />
-      </Link>
-    </div>
   )
 }
 
