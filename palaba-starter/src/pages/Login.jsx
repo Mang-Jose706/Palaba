@@ -130,10 +130,22 @@ export function LoginCard({ app = 'staff' }) {
             Forgot password?
           </button>
           {showHelp && (
-            <p id="forgot-help" className="flex w-full items-start gap-2 rounded-control bg-info-bg px-3 py-2 text-[13px] text-info-fg">
+            <div id="forgot-help" className="flex w-full items-start gap-2 rounded-control bg-info-bg px-3 py-2 text-[13px] text-info-fg">
               <Info className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-              Ask the owner to reset your password from Settings.
-            </p>
+              <p>
+                {app === 'rider' ? 'Ask the owner to reset your password from Settings.' : 'Staff: ask the owner to reset your password from Settings.'}
+                {app !== 'rider' && (
+                  <>
+                    {' '}
+                    Owner:{' '}
+                    <Link to="/forgot-password" state={{ username }} className={linkClass}>
+                      reset with a code by text
+                    </Link>
+                    .
+                  </>
+                )}
+              </p>
+            </div>
           )}
         </div>
         <AuthError>{error}</AuthError>

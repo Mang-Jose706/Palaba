@@ -1,7 +1,7 @@
 // Staff, owner and rider accounts + mock sign-in.
 
 import { getData, mutate, newId, respond } from './store.js'
-import { isValidMobile, normalizeMobile } from '../utils/format.js'
+import { formatMobile, isValidMobile, normalizeMobile } from '../utils/format.js'
 import { needsRider } from '../utils/orderRules.js'
 
 const SESSION_KEY = 'palaba:session'
@@ -9,7 +9,7 @@ const SESSION_KEY = 'palaba:session'
 function publicUser(u) {
   if (!u) return null
   // eslint-disable-next-line no-unused-vars
-  const { password, ...rest } = u
+  const { password, reset, ...rest } = u
   return rest
 }
 
@@ -206,6 +206,68 @@ export async function changePassword(id, { current, next }) {
     u.mustChangePassword = false
     return u
   })
+  return respond(publicUser(user))
+}
+
+const RESET_MINUTES = 10
+const RESET_TRIES = 5
+
+function findOwner(data, username) {
+  const name = username?.trim().toLowerCase()
+  return data.staff.find((u) => u.role === 'owner' && u.username.toLowerCase() === name)
+}
+
+/**
+ * Owner only: text a 6-digit reset code to the owner's mobile number.
+ * Staff and riders ask the owner to reset their password from Settings.
+ * @returns {Promise<{ sentTo: string }>} the masked number, e.g. "0918 *** 0001"
+ */
+export async function requestPasswordReset(username) {
+  if (!username?.trim()) throw new Error('Enter your username.')
+  const data = getData()
+  const owner = findOwner(data, username)
+  if (!owner) throw new Error('Only the owner can reset a password with a code. Staff and riders: ask the owner.')
+  const code = String(Math.floor(100000 + Math.random() * 900000))
+  mutate((d) => {
+    const u = d.staff.find((x) => x.id === owner.id)
+    u.reset = { code, expiresAt: new Date(Date.now() + RESET_MINUTES * 60_000).toISOString(), tries: 0 }
+  })
+  const shop = data.settings.shopName || 'Palaba'
+  // SMS stub (rule 5): the real back end sends this through Semaphore.
+  console.log(`[SMS stub] Password reset → ${owner.mobile}: ${shop}: Your password reset code is ${code}. It expires in ${RESET_MINUTES} minutes. Don't share it with anyone.`)
+  const shown = formatMobile(owner.mobile)
+  return respond({ sentTo: `${shown.slice(0, 4)} *** ${shown.slice(-4)}` })
+}
+
+/** Owner only: check the texted code and set a new password. */
+export async function resetPasswordWithCode(username, { code, next }) {
+  if (!/^\d{6}$/.test(code?.trim() ?? '')) throw new Error('Enter the 6-digit code.')
+  if (!next || next.length < 6) throw new Error('Use at least 6 characters.')
+  let failure = null
+  const user = mutate((d) => {
+    const u = findOwner(d, username)
+    const r = u?.reset
+    if (!r || new Date(r.expiresAt) < new Date()) {
+      if (u) delete u.reset
+      failure = 'This code has expired. Send a new one.'
+      return null
+    }
+    if (r.code !== code.trim()) {
+      r.tries += 1
+      if (r.tries >= RESET_TRIES) {
+        delete u.reset
+        failure = 'Too many wrong tries. Send a new code.'
+      } else {
+        failure = 'That code is wrong. Check the text and try again.'
+      }
+      return null
+    }
+    u.password = next
+    u.mustChangePassword = false
+    delete u.reset
+    return u
+  })
+  if (failure) throw new Error(failure)
   return respond(publicUser(user))
 }
 

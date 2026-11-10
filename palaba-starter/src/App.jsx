@@ -25,12 +25,14 @@ import RiderDone from './pages/rider/RiderDone.jsx'
 import RiderAccount from './pages/rider/RiderAccount.jsx'
 
 import Tracking from './pages/track/Tracking.jsx'
+import ForgotPassword from './pages/ForgotPassword.jsx'
 
 export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<SignUp />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/change-password" element={<ChangePassword app="staff" />} />
 
       {/* Staff and owner: signed in, inside the sidebar layout */}
