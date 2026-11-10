@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 390 844" width="390" height="844" preserveAspectRatio="xMidYMid slice">
+<defs>
+<radialGradient id="bub" cx="35%" cy="30%" r="75%">
+<stop offset="0" stop-color="#FFFFFF" stop-opacity="0.95"/>
+<stop offset="0.55" stop-color="#D6E8FD" stop-opacity="0.55"/>
+<stop offset="1" stop-color="#8FC2F7" stop-opacity="0.45"/>
+</radialGradient>
+<linearGradient id="rim" x1="0" y1="0" x2="1" y2="1">
+<stop offset="0" stop-color="#7493F7"/>
+<stop offset="1" stop-color="#2DCDE7"/>
+</linearGradient>
+</defs>
+<rect width="390" height="844" fill="#F5F8F7"/>
+<g><circle cx="40" cy="70" r="80" fill="url(#bub)" stroke="url(#rim)" stroke-opacity="0.35" stroke-width="1.5"/><ellipse cx="9.6" cy="36.4" rx="17.6" ry="9.6" transform="rotate(-35 9.6 36.4)" fill="#FFFFFF" fill-opacity="0.85"/></g>
+<g><circle cx="150" cy="40" r="24" fill="url(#bub)" stroke="url(#rim)" stroke-opacity="0.35" stroke-width="1.5"/><ellipse cx="140.9" cy="29.9" rx="5.3" ry="2.9" transform="rotate(-35 140.9 29.9)" fill="#FFFFFF" fill-opacity="0.85"/></g>
+<g><circle cx="355" cy="250" r="30" fill="url(#bub)" stroke="url(#rim)" stroke-opacity="0.35" stroke-width="1.5"/><ellipse cx="343.6" cy="237.4" rx="6.6" ry="3.6" transform="rotate(-35 343.6 237.4)" fill="#FFFFFF" fill-opacity="0.85"/></g>
+<g><circle cx="340" cy="760" r="110" fill="url(#bub)" stroke="url(#rim)" stroke-opacity="0.35" stroke-width="1.8"/><ellipse cx="298.2" cy="713.8" rx="24.2" ry="13.2" transform="rotate(-35 298.2 713.8)" fill="#FFFFFF" fill-opacity="0.85"/></g>
+<g><circle cx="200" cy="810" r="36" fill="url(#bub)" stroke="url(#rim)" stroke-opacity="0.35" stroke-width="1.5"/><ellipse cx="186.3" cy="794.9" rx="7.9" ry="4.3" transform="rotate(-35 186.3 794.9)" fill="#FFFFFF" fill-opacity="0.85"/></g>
+<g><circle cx="30" cy="560" r="16" fill="url(#bub)" stroke="url(#rim)" stroke-opacity="0.35" stroke-width="1.5"/><ellipse cx="23.9" cy="553.3" rx="3.5" ry="1.9" transform="rotate(-35 23.9 553.3)" fill="#FFFFFF" fill-opacity="0.85"/></g>
+<circle cx="110" cy="150" r="12" fill="none" stroke="url(#rim)" stroke-opacity="0.45" stroke-width="2"/>
+<circle cx="370" cy="120" r="8" fill="none" stroke="url(#rim)" stroke-opacity="0.45" stroke-width="2"/>
+<circle cx="240" cy="700" r="10" fill="none" stroke="url(#rim)" stroke-opacity="0.45" stroke-width="2"/>
+<circle cx="60" cy="440" r="7" fill="none" stroke="url(#rim)" stroke-opacity="0.45" stroke-width="2"/>
+</svg>

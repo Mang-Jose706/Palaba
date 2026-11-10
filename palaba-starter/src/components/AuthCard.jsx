@@ -8,12 +8,14 @@ import { cx, focusRing } from './cx.js'
 /**
  * Centered card with the logo and a big title (the log in layout),
  * shared by Log in, Sign up and Change password.
+ * `bubbles` adds the bubbles background and a soft card shadow
+ * (Log in, Sign up and Rider log in only).
  */
-export default function AuthCard({ title, srTitle, subtitle, children, footer }) {
+export default function AuthCard({ title, srTitle, subtitle, children, footer, bubbles = false }) {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-bg px-4 py-10">
+    <main className={cx('flex min-h-screen items-center justify-center bg-bg px-4 py-10', bubbles && 'auth-bubbles')}>
       <h1 className="sr-only">{srTitle ?? title}</h1>
-      <Card className="w-full max-w-[420px] px-6 py-9 sm:px-8">
+      <Card className={cx('w-full max-w-[420px] px-6 py-9 sm:px-8', bubbles && 'shadow-[0_12px_40px_rgba(35,47,92,0.08)]')}>
         <div className="flex flex-col items-center gap-5 text-center">
           <Logo />
           <p aria-hidden="true" className="text-[34px] leading-tight font-bold text-navy">

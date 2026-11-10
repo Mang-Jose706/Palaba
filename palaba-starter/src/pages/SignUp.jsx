@@ -71,7 +71,7 @@ export default function SignUp() {
 
   if (done) {
     return (
-      <AuthCard title="Request sent" srTitle="Sign up request sent">
+      <AuthCard bubbles title="Request sent" srTitle="Sign up request sent">
         <div className="flex flex-col items-center gap-4 text-center">
           <CircleCheck className="size-12 text-success-fg" aria-hidden="true" />
           <p className="text-sm text-navy">
@@ -90,6 +90,7 @@ export default function SignUp() {
 
   return (
     <AuthCard
+      bubbles
       title="Sign up"
       subtitle={firstOwner ? 'You’re setting up a new shop. This first account is the owner.' : undefined}
       footer={

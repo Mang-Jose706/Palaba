@@ -82,3 +82,15 @@
     @apply bg-bg font-sans text-navy antialiased;
   }
 }
+
+/* Bubbles background for the sign-in screens only (Log in, Sign up, Rider log in). */
+@layer components {
+  .auth-bubbles {
+    background: #f5f8f7 url('./assets/backgrounds/palaba-bubbles.svg') center / cover no-repeat;
+  }
+  @media (max-width: 767px) {
+    .auth-bubbles {
+      background-image: url('./assets/backgrounds/palaba-bubbles-mobile.svg');
+    }
+  }
+}

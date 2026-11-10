@@ -51,6 +51,7 @@ export function LoginCard({ app = 'staff' }) {
 
   return (
     <AuthCard
+      bubbles
       title="Log in"
       srTitle={app === 'rider' ? 'Rider log in' : 'Log in'}
       footer={
