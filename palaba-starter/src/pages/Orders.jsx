@@ -8,7 +8,7 @@ import PageHeader from '../components/PageHeader.jsx'
 import Table, { Td, Th } from '../components/Table.jsx'
 import { PaymentBadge, StatusBadge, UnclaimedBadge } from '../components/Badge.jsx'
 import { serviceSummary } from '../components/OrderRow.jsx'
-import { cx, focusRing } from '../components/cx.js'
+import { cx, focusRing, pageShell } from '../components/cx.js'
 import useApiData from '../components/useApiData.js'
 import { getSettings, listOrders } from '../api/index.js'
 import { formatPeso, orderTotal } from '../utils/pricing.js'
@@ -59,7 +59,7 @@ export default function Orders() {
   const count = (t) => inPeriod.filter((o) => !t.statuses || t.statuses.includes(o.status)).length
 
   return (
-    <main className="mx-auto w-full max-w-[1280px] px-4 py-5 md:px-8 md:py-8">
+    <main className={pageShell}>
       <PageHeader
         title="Orders"
         subtitle={`${period.label} · ${inPeriod.length} ${inPeriod.length === 1 ? 'order' : 'orders'}`}

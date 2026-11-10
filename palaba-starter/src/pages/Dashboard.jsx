@@ -13,6 +13,7 @@ import SetupChecklist from '../components/SetupChecklist.jsx'
 import ActionNotice, { useMarkReady } from '../components/ActionNotice.jsx'
 import { getDashboardSummary, getSettings, listOrders } from '../api/index.js'
 import { formatPeso } from '../utils/pricing.js'
+import { cx, pageShell } from '../components/cx.js'
 
 // Dashboard tabs (CLAUDE.md "Dashboard behavior").
 const TABS = [
@@ -114,7 +115,7 @@ export default function Dashboard() {
   const s = summary.data
 
   return (
-    <main className="mx-auto flex w-full max-w-[1200px] flex-col gap-6 px-4 py-5 md:px-8 md:py-8">
+    <main className={cx(pageShell, 'flex flex-col gap-6')}>
       <header className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div className="flex items-center justify-between gap-4">
           {/* Phones: "Today" + short date (staff-mobile-dashboard.html); desktop: full date (Figma). */}

@@ -10,7 +10,7 @@ import PageHeader from '../components/PageHeader.jsx'
 import Select from '../components/Select.jsx'
 import Switch from '../components/Switch.jsx'
 import Table, { Td, Th } from '../components/Table.jsx'
-import { cx, focusRing } from '../components/cx.js'
+import { cx, focusRing, pageShell } from '../components/cx.js'
 import useApiData from '../components/useApiData.js'
 import AddStaffOrRiderDialog from '../dialogs/AddStaffOrRiderDialog.jsx'
 import { useConfirm } from '../components/ConfirmProvider.jsx'
@@ -520,7 +520,7 @@ export default function Settings() {
   const s = settings.data
 
   return (
-    <main className="mx-auto w-full max-w-[1280px] px-4 py-5 md:px-8 md:py-8">
+    <main className={pageShell}>
       <PageHeader title="Settings" subtitle="Owner only" />
       {!s ? (
         <p className="mt-8 text-sm text-muted">Loading…</p>

@@ -8,7 +8,7 @@ import Input from '../components/Input.jsx'
 import Notice from '../components/Notice.jsx'
 import PageHeader from '../components/PageHeader.jsx'
 import Table, { Td, Th } from '../components/Table.jsx'
-import { cx, focusRing } from '../components/cx.js'
+import { cx, focusRing, pageShell } from '../components/cx.js'
 import useApiData from '../components/useApiData.js'
 import { useAuth } from '../components/AuthProvider.jsx'
 import EditCustomerDialog from '../dialogs/EditCustomerDialog.jsx'
@@ -29,7 +29,7 @@ export default function Customers() {
   })
 
   return (
-    <main className="mx-auto w-full max-w-[1280px] px-4 py-5 md:px-8 md:py-8">
+    <main className={pageShell}>
       <PageHeader
         title="Customers"
         subtitle={`${all.data?.length ?? 0} customers · Staff and the owner can edit details`}

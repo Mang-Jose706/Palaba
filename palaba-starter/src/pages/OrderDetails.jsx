@@ -11,7 +11,7 @@ import ClaimSlip from '../components/ClaimSlip.jsx'
 import Notice from '../components/Notice.jsx'
 import PriceLines from '../components/PriceLines.jsx'
 import StatusTracker from '../components/StatusTracker.jsx'
-import { cx, focusRing } from '../components/cx.js'
+import { cx, focusRing, pageShell } from '../components/cx.js'
 import useApiData from '../components/useApiData.js'
 import { useAuth } from '../components/AuthProvider.jsx'
 import OrderDialogs, { dialogForAction } from '../dialogs/OrderDialogs.jsx'
@@ -89,14 +89,14 @@ export default function OrderDetails() {
 
   if (order.error) {
     return (
-      <main className="px-4 py-8 md:px-8">
+      <main className={pageShell}>
         <BackLink />
         <p className="mt-4 text-muted">Order {id} was not found.</p>
       </main>
     )
   }
   const o = order.data
-  if (!o) return <main className="px-4 py-8 text-sm text-muted md:px-8">Loading…</main>
+  if (!o) return <main className={cx(pageShell, 'text-sm text-muted')}>Loading…</main>
 
   const action = nextAction(o)
   const undo = undoInfo(o)
@@ -172,7 +172,7 @@ export default function OrderDetails() {
   return (
     <>
     <MobileTopBar title={o.id} back="/" />
-    <main className="mx-auto w-full max-w-[1200px] px-4 py-4 md:px-8 md:py-8">
+    <main className={pageShell}>
       <BackLink className="max-md:hidden" />
 
       <header className="flex flex-col gap-4 md:mt-3 lg:flex-row lg:items-center lg:justify-between">

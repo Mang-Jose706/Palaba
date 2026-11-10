@@ -4,7 +4,7 @@ import Card, { StatCard } from '../components/Card.jsx'
 import CollectionsChart from '../components/CollectionsChart.jsx'
 import PageHeader from '../components/PageHeader.jsx'
 import Table, { Td, Th } from '../components/Table.jsx'
-import { cx, focusRing } from '../components/cx.js'
+import { cx, focusRing, pageShell } from '../components/cx.js'
 import useApiData from '../components/useApiData.js'
 import { getReport } from '../api/index.js'
 import { formatPeso } from '../utils/pricing.js'
@@ -17,7 +17,7 @@ export default function Reports() {
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
 
   return (
-    <main className="mx-auto w-full max-w-[1280px] px-4 py-5 md:px-8 md:py-8">
+    <main className={pageShell}>
       <PageHeader title="Reports" subtitle={`${today} · Owner only`} />
 
       {!r ? (

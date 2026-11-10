@@ -4,7 +4,7 @@ import { Info, MessageSquareText } from 'lucide-react'
 import { MobileTopBar } from '../components/MobileHeader.jsx'
 import Notice from '../components/Notice.jsx'
 import Modal from '../components/Modal.jsx'
-import { cx, focusRing } from '../components/cx.js'
+import { cx, focusRing, pageShell } from '../components/cx.js'
 import CustomerSearchInput from '../components/CustomerSearchInput.jsx'
 import BackLink from '../components/BackLink.jsx'
 import Button from '../components/Button.jsx'
@@ -296,7 +296,7 @@ export default function NewOrder() {
   return (
     <>
     <MobileTopBar title="New order" back="/" />
-    <main className="mx-auto w-full max-w-[1200px] px-4 py-4 md:px-8 md:py-8">
+    <main className={pageShell}>
       <BackLink className="max-md:hidden" />
       <h1 className="mt-2 text-2xl font-bold tracking-tight text-navy max-md:sr-only">New order</h1>
 

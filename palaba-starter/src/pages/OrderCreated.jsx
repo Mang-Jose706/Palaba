@@ -12,6 +12,7 @@ import { getOrder, getSettings, trackingLink } from '../api/index.js'
 import { isPaid } from '../utils/orderRules.js'
 import { formatPeso, orderTotal } from '../utils/pricing.js'
 import { formatLongDay, formatMobile, formatTime, fromDateKey } from '../utils/format.js'
+import { cx, pageShell } from '../components/cx.js'
 
 function subtitle(order) {
   if (order.type === 'home_pickup') {
@@ -55,7 +56,7 @@ export default function OrderCreated() {
 
   if (order.error) {
     return (
-      <main className="px-4 py-8 md:px-8">
+      <main className={pageShell}>
         <p className="text-muted">Order {id} was not found.</p>
         <Button to="/" variant="secondary" className="mt-4">
           Back to board
@@ -63,12 +64,12 @@ export default function OrderCreated() {
       </main>
     )
   }
-  if (!o || !settings.data) return <main className="px-4 py-8 text-sm text-muted md:px-8">Loading…</main>
+  if (!o || !settings.data) return <main className={cx(pageShell, 'text-sm text-muted')}>Loading…</main>
 
   return (
     <>
     <MobileTopBar title={o.type === 'home_pickup' ? 'Pickup scheduled' : 'Order created'} back="/" />
-    <main className="mx-auto w-full max-w-[1200px] px-4 py-4 md:px-8 md:py-8">
+    <main className={pageShell}>
       <h1 className="text-2xl font-bold tracking-tight text-navy">{o.type === 'home_pickup' ? 'Pickup scheduled' : 'Order created'}</h1>
       <p className="mt-1 text-sm text-muted">{subtitle(o)}</p>
 
