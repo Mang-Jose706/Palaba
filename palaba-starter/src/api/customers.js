@@ -19,13 +19,25 @@ function withStats(data, customer) {
   }
 }
 
+/**
+ * Customers, optionally filtered by part of a name or mobile number (spaces
+ * ignored). With a search, best matches come first: names starting with the
+ * text, then names with a word starting with it, then the rest.
+ */
 export async function listCustomers({ search } = {}) {
   const data = getData()
-  const q = search?.trim().toLowerCase()
+  const q = search?.trim().toLowerCase() ?? ''
+  const digits = q.replace(/\D/g, '')
+  const rank = (c) => {
+    const n = c.name.toLowerCase()
+    if (n.startsWith(q)) return 0
+    if (n.split(/\s+/).some((w) => w.startsWith(q))) return 1
+    return 2
+  }
   const list = data.customers
-    .filter((c) => !q || c.name.toLowerCase().includes(q) || c.mobile.includes(q))
+    .filter((c) => !q || c.name.toLowerCase().includes(q) || (digits.length >= 3 && normalizeMobile(c.mobile).includes(digits)))
     .map((c) => withStats(data, c))
-    .sort((a, b) => a.name.localeCompare(b.name))
+    .sort((a, b) => (q ? rank(a) - rank(b) : 0) || a.name.localeCompare(b.name))
   return respond(list)
 }
 

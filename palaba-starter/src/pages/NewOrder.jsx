@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { MessageSquareText } from 'lucide-react'
 import { MobileTopBar } from '../components/MobileHeader.jsx'
 import Notice from '../components/Notice.jsx'
+import CustomerSearchInput from '../components/CustomerSearchInput.jsx'
 import BackLink from '../components/BackLink.jsx'
 import Button from '../components/Button.jsx'
 import Card from '../components/Card.jsx'
@@ -17,7 +18,7 @@ import { useConfirm } from '../components/ConfirmProvider.jsx'
 import { createOrder, findCustomerByMobile, getSettings, listRiders, updateCustomer } from '../api/index.js'
 import { SERVICES, computePrice, formatPeso, roundKg } from '../utils/pricing.js'
 import { PAYMENT_METHODS, paymentOptionsFor } from '../utils/orderRules.js'
-import { formatMobile, fromDateKey, isValidMobile, upcomingDays } from '../utils/format.js'
+import { formatMobile, fromDateKey, isValidMobile, normalizeMobile, upcomingDays } from '../utils/format.js'
 
 const TYPES = [
   {
@@ -74,6 +75,8 @@ export default function NewOrder() {
   const [mobile, setMobile] = useState('')
   const [name, setName] = useState('')
   const [returning, setReturning] = useState(null)
+  const returningRef = useRef(null)
+  returningRef.current = returning
   // Service
   const [service, setService] = useState('wash_dry_fold')
   const [kg, setKg] = useState('')
@@ -114,27 +117,44 @@ export default function NewOrder() {
     if (!options.some((o) => o.id === paymentOption)) setPaymentOption(options[0].id)
   }, [options, paymentOption])
 
-  // Returning customer: fill in what we already know.
+  // A saved customer, picked from the name suggestions or found by number.
+  function selectCustomer(c) {
+    setReturning(c)
+    setName(c.name)
+    setMobile(formatMobile(c.mobile))
+    setAddress(c.address || '')
+    setLandmark(c.landmark || '')
+    setErrors((e) => ({ ...e, name: undefined, mobile: undefined }))
+  }
+
+  function clearCustomer() {
+    setReturning(null)
+    setName('')
+    setMobile('')
+    setAddress('')
+    setLandmark('')
+  }
+
+  // Typing a number that belongs to a saved customer selects that customer.
+  // Editing the number of the selected customer keeps them selected; the new
+  // number is saved to their record when the order is created.
   useEffect(() => {
-    if (!isValidMobile(mobile)) {
-      setReturning(null)
-      return
-    }
+    if (!isValidMobile(mobile)) return
     let alive = true
     findCustomerByMobile(mobile).then((c) => {
-      if (!alive) return
+      if (!alive || !c || returningRef.current?.id === c.id) return
       setReturning(c)
-      if (c) {
-        // Use the saved name; staff can still correct it (saved on submit).
-        setName(c.name)
-        setAddress((a) => a || c.address || '')
-        setLandmark((l) => l || c.landmark || '')
-      }
+      setName(c.name)
+      setAddress((a) => a || c.address || '')
+      setLandmark((l) => l || c.landmark || '')
     })
     return () => {
       alive = false
     }
   }, [mobile])
+
+  const mobileChanged = returning && isValidMobile(mobile) && normalizeMobile(mobile) !== normalizeMobile(returning.mobile)
+  const nameChanged = returning && name.trim() && name.trim() !== returning.name
 
   // Live price (rule 1: always from computePrice).
   const sessionPrice = s?.prices?.[service] ?? 0
@@ -218,9 +238,13 @@ export default function NewOrder() {
     if (!ok) return
     setBusy(true)
     try {
-      // Returning customer whose name was corrected here: update the saved name.
-      if (returning && name.trim() !== returning.name) {
-        await updateCustomer(returning.id, { name: name.trim() }, { by: user?.id })
+      // Saved customer whose name or number was corrected here: update their record first,
+      // so texts for this order go to the new number.
+      if (returning && (nameChanged || mobileChanged)) {
+        const patch = {}
+        if (nameChanged) patch.name = name.trim()
+        if (mobileChanged) patch.mobile = mobile
+        await updateCustomer(returning.id, patch, { by: user?.id })
       }
       const base = {
         type,
@@ -284,6 +308,23 @@ export default function NewOrder() {
         <div className="flex flex-col gap-4">
           <SectionCard title="Customer">
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <CustomerSearchInput
+                value={name}
+                onChange={(text) => {
+                  setName(text)
+                  if (!text.trim()) setReturning(null)
+                }}
+                onSelect={selectCustomer}
+                selectedId={returning?.id}
+                error={errors.name}
+                hint={
+                  nameChanged
+                    ? `The saved name “${returning.name}” will be updated.`
+                    : returning
+                      ? `Returning customer · ${returning.orderCount} ${returning.orderCount === 1 ? 'order' : 'orders'}`
+                      : 'New customers are saved with the order.'
+                }
+              />
               <Input
                 label="Mobile number"
                 type="tel"
@@ -294,18 +335,18 @@ export default function NewOrder() {
                 onChange={(e) => setMobile(e.target.value)}
                 onBlur={() => isValidMobile(mobile) && setMobile(formatMobile(mobile))}
                 error={errors.mobile}
-                hint={returning ? `Returning customer · ${returning.orderCount} ${returning.orderCount === 1 ? 'order' : 'orders'}` : undefined}
-              />
-              <Input
-                label="Customer name"
-                autoComplete="off"
-                placeholder="Full name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                error={errors.name}
-                hint={returning && name.trim() && name.trim() !== returning.name ? `The saved name “${returning.name}” will be updated.` : undefined}
+                hint={mobileChanged ? `Their saved number ${formatMobile(returning.mobile)} will be updated.` : undefined}
               />
             </div>
+            {returning && (
+              <button
+                type="button"
+                onClick={clearCustomer}
+                className="self-start rounded-control px-1 text-sm font-medium text-accent hover:underline focus-visible:outline-2 focus-visible:outline-accent"
+              >
+                Not {returning.name}? Start a new customer
+              </button>
+            )}
           </SectionCard>
 
           {isPickup && (
