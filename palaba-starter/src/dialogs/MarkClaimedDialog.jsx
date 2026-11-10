@@ -9,12 +9,11 @@ import { markClaimed } from '../api/index.js'
 import { PAYMENT_METHODS, canRelease, isPaid } from '../utils/orderRules.js'
 import { formatPeso, orderTotal } from '../utils/pricing.js'
 import { formatShortDate } from '../utils/format.js'
-import { Caption, ErrorNotice, useSubmit } from './shared.jsx'
+import { ErrorNotice, useSubmit } from './shared.jsx'
 
 /** Rule 2: release only when paid in full. The button stays off until then. */
 export default function MarkClaimedDialog({ order, user, onClose, onDone, onCollect }) {
   const [slipOk, setSlipOk] = useState(false)
-  const [bagsOk, setBagsOk] = useState(false)
   const { busy, error, run } = useSubmit()
   const paid = isPaid(order)
   const allowed = canRelease(order)
@@ -38,7 +37,7 @@ export default function MarkClaimedDialog({ order, user, onClose, onDone, onColl
           <Button variant="secondary" onClick={onClose}>
             Back
           </Button>
-          <Button onClick={submit} disabled={busy || !allowed || !slipOk || !bagsOk}>
+          <Button onClick={submit} disabled={busy || !allowed || !slipOk}>
             Mark claimed
           </Button>
         </>
@@ -83,13 +82,9 @@ export default function MarkClaimedDialog({ order, user, onClose, onDone, onColl
         <Checkbox checked={slipOk} onChange={setSlipOk} disabled={!paid}>
           Customer showed the claim slip, or the name and mobile number match
         </Checkbox>
-        <Checkbox checked={bagsOk} onChange={setBagsOk} disabled={!paid}>
-          Bag count matches ({bags} {bags === 1 ? 'bag' : 'bags'})
-        </Checkbox>
       </fieldset>
 
       <ErrorNotice error={error} />
-      <Caption>This button stays off until the order is paid in full.</Caption>
     </Modal>
   )
 }
