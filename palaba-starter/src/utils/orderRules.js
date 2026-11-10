@@ -133,8 +133,12 @@ export function canEditOrder(order) {
 export function canReschedulePickup(order) {
   return order.status === 'pickup_scheduled'
 }
-export function canChangeRider(order) {
+/** The order still has a trip ahead for its rider: a pickup, or a delivery not yet done. */
+export function needsRider(order) {
   return order.status === 'pickup_scheduled' || (isHomeDelivery(order) && ['received', 'in_progress', 'ready', 'out_for_delivery'].includes(order.status))
+}
+export function canChangeRider(order) {
+  return needsRider(order)
 }
 
 /**

@@ -2,6 +2,7 @@
 
 import { getData, mutate, newId, respond } from './store.js'
 import { isValidMobile, normalizeMobile } from '../utils/format.js'
+import { needsRider } from '../utils/orderRules.js'
 
 const SESSION_KEY = 'palaba:session'
 
@@ -148,6 +149,29 @@ export async function signUp({ role = 'staff', name, mobile, username, password 
 export async function getSetupState() {
   const data = getData()
   return respond({ hasOwner: data.staff.some((u) => u.role === 'owner' && u.active) })
+}
+
+/**
+ * Owner deletes a staff or rider account. The owner account can't be deleted,
+ * and a rider who still has trips ahead must have them reassigned first.
+ * Past orders keep their history; anyone signed in with the account is
+ * signed out on their next screen.
+ */
+export async function deleteUser(id) {
+  mutate((data) => {
+    const u = allUsers(data).find((x) => x.id === id)
+    if (!u) throw new Error('User not found')
+    if (u.role === 'owner') throw new Error('The owner account can’t be deleted.')
+    if (u.role === 'rider') {
+      const trips = data.orders.filter((o) => o.riderId === id && needsRider(o)).map((o) => o.id)
+      if (trips.length) {
+        throw new Error(`${u.name} still has ${trips.length === 1 ? 'a trip' : `${trips.length} trips`} (${trips.join(', ')}). Reassign ${trips.length === 1 ? 'it' : 'them'} to another rider first.`)
+      }
+    }
+    data.staff = data.staff.filter((x) => x.id !== id)
+    data.riders = data.riders.filter((x) => x.id !== id)
+  })
+  return respond(true)
 }
 
 /** Owner rejects a sign-up request: the waiting account is deleted. */

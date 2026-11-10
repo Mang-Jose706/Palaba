@@ -14,7 +14,7 @@ import { cx, focusRing } from '../components/cx.js'
 import useApiData from '../components/useApiData.js'
 import AddStaffOrRiderDialog from '../dialogs/AddStaffOrRiderDialog.jsx'
 import { useConfirm } from '../components/ConfirmProvider.jsx'
-import { approveUser, rejectSignUp, getSettings, listRiders, listStaff, previewOrderText, updateSettings } from '../api/index.js'
+import { approveUser, deleteUser, rejectSignUp, getSettings, listRiders, listStaff, previewOrderText, updateSettings } from '../api/index.js'
 import { SERVICES, SESSION_KG, computePrice, extraKgPrice, formatPeso, serviceLabel } from '../utils/pricing.js'
 import { formatMobile, isValidMobile } from '../utils/format.js'
 
@@ -51,7 +51,7 @@ function useFlash() {
   const [msg, setMsg] = useState(null)
   useEffect(() => {
     if (!msg) return
-    const t = setTimeout(() => setMsg(null), 2500)
+    const t = setTimeout(() => setMsg(null), msg.tone === 'danger' ? 8000 : 2500)
     return () => clearTimeout(t)
   }, [msg])
   return [msg, setMsg]
@@ -463,6 +463,37 @@ function Accounts() {
                 >
                   Edit
                 </TextButton>
+                {p.role !== 'owner' && !p.pending && (
+                  <TextButton
+                    aria-label={`Delete ${p.name}`}
+                    className="text-danger-fg hover:bg-danger-bg"
+                    onClick={async () => {
+                      const ok = await confirm({
+                        title: `Delete ${p.name}’s account?`,
+                        message: (
+                          <>
+                            <p>
+                              @{p.username} will be removed and can’t log in anymore. Past orders keep their history. This can’t be
+                              undone.
+                            </p>
+                            <p className="mt-2 text-muted">To pause access instead, use Edit and turn off “Active”.</p>
+                          </>
+                        ),
+                        confirmLabel: 'Delete account',
+                        tone: 'danger',
+                      })
+                      if (!ok) return
+                      try {
+                        await deleteUser(p.id)
+                        setMsg({ tone: 'neutral', text: `${p.name}’s account was deleted.` })
+                      } catch (err) {
+                        setMsg({ tone: 'danger', text: err.message })
+                      }
+                    }}
+                  >
+                    Delete
+                  </TextButton>
+                )}
               </Td>
             </tr>
           ))}

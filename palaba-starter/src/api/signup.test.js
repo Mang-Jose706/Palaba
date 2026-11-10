@@ -96,3 +96,28 @@ describe('deleting', () => {
     await expect(deleteCustomer(c.id)).resolves.toBe(true)
   })
 })
+
+describe('owner deletes staff or rider accounts', () => {
+  it('deletes a staff account; it can no longer log in and is signed out', async () => {
+    const { deleteUser, getCurrentUser } = await import('./staff.js')
+    await signIn('bea', 'palaba123')
+    expect((await getCurrentUser()).username).toBe('bea')
+    await deleteUser('u-02')
+    expect(await getCurrentUser()).toBeNull()
+    await expect(signIn('bea', 'palaba123')).rejects.toThrow(/Wrong username/)
+  })
+
+  it('never deletes the owner', async () => {
+    const { deleteUser } = await import('./staff.js')
+    await expect(deleteUser('u-01')).rejects.toThrow(/owner/)
+  })
+
+  it('a rider with trips ahead must have them reassigned first', async () => {
+    const { deleteUser, listRiders } = await import('./staff.js')
+    await expect(deleteUser('r-01')).rejects.toThrow(/LT-1052/)
+    const { user } = await signUp({ ...form, role: 'rider', username: 'newrider', mobile: '09170001111' })
+    await approveUser(user.id)
+    await deleteUser(user.id)
+    expect((await listRiders()).some((r) => r.id === user.id)).toBe(false)
+  })
+})
